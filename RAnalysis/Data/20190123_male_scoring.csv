@@ -1,0 +1,52 @@
+sample_date,sex,ID,magnif,Treatment,target_characteristic ,hue,saturation,brightness,area_(um^3),Note
+20190123,M,#41,10x,Ambient,Total Area,NA,NA,NA,18460.273,
+20190123,M,#41,10x,Ambient,Lumen,198:255,143:255,58:255,854.194,
+20190123,M,#41,10x,Ambient,Spermatozoa,165:195,202:255,58:255,2838.746,
+20190123,M,#41,10x,Ambient,Spematozoa+Spermatocytes,115:182,88:255,58:236,9636.369,
+20190123,M,#1,10x,Ambient,Total Area,NA,NA,NA,15864.523,
+20190123,M,#1,10x,Ambient,Lumen,198:255,143:255,58:255,NA,
+20190123,M,#1,10x,Ambient,Glycogen_cells,210:255,137:255,58:255,1445.063,
+20190123,M,#1,10x,Ambient,Spermatozoa,NA,NA,NA,NA,
+20190123,M,#1,10x,Ambient,Spematozoa+Spermatocytes,115:186,143:255,58:255,1900.884,
+20190123,M,#003,10x,Low,Total Area,NA,NA,NA,17078.255,
+20190123,M,#003,10x,Low,Lumen,198:255,143:255,58:255,NA,lumen and connective tissue same spectrum
+20190123,M,#003,10x,Low,Spermatozoa,165:195,202:255,58:255,NA,spermatozoa and spermatocytes same spectrum
+20190123,M,#003,10x,Low,Spematozoa+Spermatocytes,115:182,88:255,58:236,5530.465,
+20190123,M,#4,10x,Ambient,Total Area,NA,NA,NA,16536.424,
+20190123,M,#4,10x,Ambient,Lumen,191:255,102:255,58:228,1842.668,
+20190123,M,#4,10x,Ambient,Spermatozoa,165:195,213:255,58:255,1786.32,
+20190123,M,#4,10x,Ambient,Spematozoa+Spermatocytes,115:191,88:255,58:236,8008.622,
+20190123,M,#5,10x,Ambient,Total Area,NA,NA,NA,10749.748,
+20190123,M,#5,10x,Ambient,Lumen,NA,NA,NA,NA,
+20190123,M,#5,10x,Ambient,Spermatozoa,NA,NA,NA,NA,
+20190123,M,#5,10x,Ambient,Spematozoa+Spermatocytes,164:195,132:255,58:231,1690.564,
+20190123,M,#5,10x,Ambient,Lipids_connective_tissue,191:255,33:255,87:255,6704.839,
+20190123,M,#013,10x,Low,Total Area,NA,NA,NA,15227.045,
+20190123,M,#013,10x,Low,Lumen,NA,NA,NA,NA,lumen and connective tissue same spectrum
+20190123,M,#013,10x,Low,Spermatozoa,168:182,224:255,58:220,798.969,
+20190123,M,#013,10x,Low,Spematozoa+Spermatocytes,164:192,132:255,58:253,5652.363,
+20190123,M,#013,10x,Low,Lipids_connective_tissue,NA,NA,NA,NA,
+20190123,M,#016,10x,Low,Total Area,NA,NA,NA,14412.629,
+20190123,M,#016,10x,Low,Lumen,NA,NA,NA,NA,
+20190123,M,#016,10x,Low,Spermatozoa,168:182,238:255,58:220,127.484,
+20190123,M,#016,10x,Low,Spematozoa+Spermatocytes,115:188,88:253,58:236,3582.247,
+20190123,M,#018,10x,Low,Total Area,NA,NA,NA,15389.36,
+20190123,M,#018,10x,Low,Lumen,NA,NA,NA,NA,lumen and connective tissue same spectrum
+20190123,M,#018,10x,Low,Spermatozoa,168:182,199:255,58:211,1500.013,
+20190123,M,#018,10x,Low,Spematozoa+Spermatocytes,115:188,88:253,58:236,5888.747,
+20190123,M,#023,10x,Low,Total Area,NA,NA,NA,14677.19,
+20190123,M,#023,10x,Low,Lumen,NA,NA,NA,NA,
+20190123,M,#023,10x,Low,Spermatozoa,NA,NA,NA,NA,
+20190123,M,#023,10x,Low,Spematozoa+Spermatocytes,115:188,88:253,58:236,670.724,no spermatozoa
+20190123,M,#037,10x,Low,Total Area,NA,NA,NA,12621.167,
+20190123,M,#037,10x,Low,Lumen,NA,NA,NA,NA,lumen and connective tissue same spectrum
+20190123,M,#037,10x,Low,Spermatozoa,165:195,218:255,58:255,5020.335,
+20190123,M,#037,10x,Low,Spematozoa+Spermatocytes,115:189,88:255,58:236,5020.335,
+20190123,M,#040,10x,Low,Total Area,NA,NA,NA,15631.211,
+20190123,M,#040,10x,Low,Lumen,NA,NA,NA,NA,lumen and connective tissue same spectrum
+20190123,M,#040,10x,Low,Spermatozoa,165:195,218:255,116:175,868.955,
+20190123,M,#040,10x,Low,Spematozoa+Spermatocytes,115:189,88:255,58:236,3966.052,
+20190123,M,#044,10x,Ambient,Total Area,NA,NA,NA,15305.136,
+20190123,M,#044,10x,Ambient,Lumen,NA,NA,NA,NA,lumen and connective tissue same spectrum
+20190123,M,#044,10x,Ambient,Spermatozoa,165:195,222:255,118:207,1175.157,
+20190123,M,#044,10x,Ambient,Spematozoa+Spermatocytes,115:189,88:255,58:236,5926.103,
