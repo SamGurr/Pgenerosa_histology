@@ -13,6 +13,7 @@ library(ggplot2)        # Version 2.2.1, Packaged: 2016-12-30, Depends: R (>= 3.
 library(tidyr)
 library(ggpubr)
 library(car)
+library(gridExtra)
 #set working directory---------------------------------------------------------------------------------
 setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data") #set working
 
@@ -38,43 +39,126 @@ Means_Table <- dat2 %>%
   dplyr::select(-'acini_segment') %>% # remove unecessary columns
   group_by(ID,Treatment,Date) %>%
   summarize(
-            mean_zoa= mean(zoa, na.rm = TRUE),
-            mean_cytes = mean(cytes, na.rm = TRUE),
-            mean_lumen= mean(lumen, na.rm = TRUE),
+            mean_zoa    = mean(zoa, na.rm = TRUE),
+            mean_cytes  = mean(cytes, na.rm = TRUE),
+            mean_lumen  = mean(lumen, na.rm = TRUE),
             mean_total_acini_area = mean(total_area, na.rm = TRUE),
-            num_acini=n())
+            mean_AREA   = mean(TOTAL_AREA, na.rm = TRUE),
+            prop_zoa    = mean(perc_zoa, na.rm = TRUE),
+            prop_cytes  = mean(perc_cytes, na.rm = TRUE),
+            prop_lumen  = mean(perc_lumen, na.rm = TRUE),
+            prop_zoa    = mean(perc_zoa, na.rm = TRUE),
+            num_acini   = n())
 Means_Table # view the table
 
 # PIVOT LONGER-----------------------------------------------------------------------------------------
 Means_Table_long <- Means_Table %>% 
-  tidyr::pivot_longer(cols = c(4:7), names_to='scoring_metric', values_to='means')
+  tidyr::pivot_longer(cols = c(4:11), names_to='scoring_metric', values_to='means')
 
 #  PLOTS----------------------------------------------------------------------------------------
-# ocrete variable Date_Treat
+# ALL PLOTS (using Means_Table_long)
+# order variable Date_Treat
 Means_Table_long$Date_Treat <- paste((substr(Means_Table_long$Date,5,8)),Means_Table_long$Treatment, sep ="_")
 list(Means_Table_long$Date_Treat)
 # order the levels of the factor date_treatment to order correly in the plot
 Means_Table_long$Date_Treat <- factor(Means_Table_long$Date_Treat,levels = c("0123_Ambient", "0123_Low", "0221_Ambient", "0221_Low"))
-
-
-
-# plots
-plot <- ggboxplot(Means_Table_long, x = "Date_Treat", y = "means",  fill = "Treatment",
-                     palette = c("#00AFBB", "#FC4E07"), add = "none")
+# plot
 plot2 <- plot %>% ggadd(shape ="Treatment",fill = "white") %>% ggadd("jitter", size = 4,shape ="Treatment",fill = "white") +
   facet_wrap( ~ scoring_metric, ncol=2, scales = "free") + theme_classic()
 plot2
 
+# INDIVIIDUAL PLOTS (using Means_Table)
+# MEAN AREA OF ACINI
+Means_Table$Date <- as.character(Means_Table$Date)
+plot_area <- ggplot(Means_Table, aes(x=Date, y=mean_AREA, color=Treatment, fill - white)) +
+              theme_bw() +
+              geom_boxplot() +
+              ylab("acini area (µm)") +
+              scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
+              annotate("text", size = 12, x=0.55, y=1300, label= "A")
+pA <- plot_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
+# plot proportion spermatozoa 
+plot_zoa_proportion <- ggplot(Means_Table, aes(x=Date, y=prop_zoa, color=Treatment, fill - white)) +
+  theme_bw() +
+  geom_boxplot() +
+  ylab("spermatozoa area proportion (%)") +
+  scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
+  annotate("text", size = 12, x=0.55, y=45, label= "B")
+pB <- plot_zoa_proportion %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
+# plot proportion spermatocytes 
+plot_cytes_proportion <- ggplot(Means_Table, aes(x=Date, y=prop_cytes, color=Treatment, fill - white)) +
+  theme_bw() +
+  geom_boxplot() +
+  ylab("spermatocytes area proportion (%)") +
+  scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
+  annotate("text", size = 12, x=0.55, y=95, label= "C")
+pC <- plot_cytes_proportion %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
+# plot proportion lumen
+plot_lumen_proportion <- ggplot(Means_Table, aes(x=Date, y=prop_lumen, color=Treatment, fill - white)) +
+  theme_bw() +
+  geom_boxplot() +
+  ylab("lumen area proportion (%)") +
+  scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
+  annotate("text", size = 12, x=0.55, y=22, label= "D")
+pD <- plot_lumen_proportion %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
+# gird plots
+Final_Plot_Grid <- grid.arrange(pA, pB,pC, pD, ncol =2, nrow = 2)
+Final_Plot_Grid # view plot
+
+
+
 # STATISTICS------------------------------------------------------------------------------------------
 Means_Table$Treatment <- as.factor(Means_Table$Treatment)
 Means_Table$Date <- as.factor(Means_Table$Date)
-par(mfrow=c(1,4)) #set plotting configuration
+par(mfrow=c(2,2)) #set plotting configuration
 par(mar=c(1,1,1,1)) #set margins for plots
 
 # Two-Way ANOVA (treat×time)
 typeof(Means_Table$Date) # currenty an integer - must change to a character
 Means_Table$Date <- as.character(Means_Table$Date)
-## total acini area test---------------------------------
+
+
+## TOTAL_AREA test (lumen + cytes + zoa) ---------------------------------
+mod_total_area_TIME  <- aov(mean_AREA~Treatment*Date, data = Means_Table)
+anova(mod_total_area_TIME) 
+shapiro.test(residuals(mod_total_area_TIME)) #  normal residuals p-value = 0.001496 (driven by outlier?)
+leveneTest(mod_total_area_TIME) # p = 0.3766
+hist(residuals(mod_total_area_TIME)) #plot histogram of residuals
+boxplot(residuals(mod_total_area_TIME)) #plot boxplot of residuals
+plot(fitted(mod_total_area_TIME),residuals(mod_total_area_TIME))
+qqnorm(residuals(mod_total_area_TIME)) # qqplot
+
+## PROPORTION zoa test  ---------------------------------
+mod_prop_zoa_TIME  <- aov(prop_zoa~Treatment*Date, data = Means_Table)
+anova(mod_prop_zoa_TIME) 
+shapiro.test(residuals(mod_prop_zoa_TIME)) #  normal residuals p-value = 0.2917
+leveneTest(mod_prop_zoa_TIME) # p = 0.7
+hist(residuals(mod_prop_zoa_TIME)) #plot histogram of residuals
+boxplot(residuals(mod_prop_zoa_TIME)) #plot boxplot of residuals
+plot(fitted(mod_prop_zoa_TIME),residuals(mod_prop_zoa_TIME))
+qqnorm(residuals(mod_prop_zoa_TIME)) # qqplot
+
+## PROPORTION cytes test  ---------------------------------
+mod_prop_cytes_TIME  <- aov(prop_cytes~Treatment*Date, data = Means_Table)
+anova(mod_prop_cytes_TIME) 
+shapiro.test(residuals(mod_prop_cytes_TIME)) #  normal residuals p-value = 0.1608
+leveneTest(mod_prop_cytes_TIME) # p = 0.5509
+hist(residuals(mod_prop_cytes_TIME)) #plot histogram of residuals
+boxplot(residuals(mod_prop_cytes_TIME)) #plot boxplot of residuals
+plot(fitted(mod_prop_cytes_TIME),residuals(mod_prop_cytes_TIME))
+qqnorm(residuals(mod_prop_cytes_TIME)) # qqplot
+
+## PROPORTION lumen test  ---------------------------------
+mod_prop_lumen_TIME  <- aov(prop_lumen~Treatment*Date, data = Means_Table)
+anova(mod_prop_lumen_TIME) 
+shapiro.test(residuals(mod_prop_lumen_TIME)) #  normal residuals p-value = 7.261e-06
+leveneTest(mod_prop_lumen_TIME) # p = 0.6463
+hist(residuals(mod_prop_lumen_TIME)) #plot histogram of residuals
+boxplot(residuals(mod_prop_lumen_TIME)) #plot boxplot of residuals
+plot(fitted(mod_prop_lumen_TIME),residuals(mod_prop_lumen_TIME))
+qqnorm(residuals(mod_prop_lumen_TIME)) # qqplot
+
+## total acini area test 2 (total of whole area + white space) ---------------------------------
 mod_total_acini_TIME  <- aov(mean_total_acini_area~Treatment*Date, data = Means_Table)
 anova(mod_total_acini_TIME) # p = 0.9391
 shapiro.test(residuals(mod_total_acini_TIME)) #  normal residuals p-value = 7.261e-06
@@ -117,3 +201,4 @@ plot(fitted(mod_lumen_TIME),residuals(mod_lumen_TIME))
 qqnorm(residuals(mod_lumen_TIME)) # qqplot
 
 TukeyHSD(mod_lumen_TIME)
+
