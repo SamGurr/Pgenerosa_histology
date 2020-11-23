@@ -17,59 +17,283 @@ library(gridExtra)
 #set working directory---------------------------------------------------------------------------------
 setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data") #set working
 
+
+######################################################################### #
+############################## DATA PREP ################################ #
+######################################################################### #
+
 # UPLOAD DATA------------------------------------------------------------------------------------------
+staging<-read.csv("Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
+staging
 Male_hist<-read.csv("Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
 Male_hist # view data
 Male_hist$Area = as.numeric(dat$Area)
-
 # PIVOT THE TABLE TO CALC RELATIVE VALUES--------------------------------------------------------------
 Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
   tidyr::pivot_wider(names_from=type, values_from=Area)
-
 # CALC RELATIVE VALUES---------------------------------------------------------------------------------
 Male_hist_2$perc_zoa <- (Male_hist_2$zoa/Male_hist_2$total_area)*100 # percent area of spermatozoa
 Male_hist_2$perc_cytes <- ((Male_hist_2$cytes_zoa - Male_hist_2$zoa)/Male_hist_2$total_area)*100 # percent area of spermatocytes
 Male_hist_2$perc_lumen <- (Male_hist_2$lumen/Male_hist_2$total_area)*100 # percent area of lumen
 Male_hist_2$cytes <- (Male_hist_2$cytes_zoa - Male_hist_2$zoa) # area of spermatocytes
-
 # convert to characer
 typeof(Male_hist_2$ID) 
 typeof(Male_hist_2$Date) 
 Male_hist_2$Date <- as.character(Male_hist_2$Date)
 
+
+######################################################################### #
+##################      TWO-WAY ANOVA     ############################### #
+######################################################################### #
+# ZOA TEST
+Zoa_2factorialAOV <- aov(zoa ~ Treatment * Date, data = Male_hist_2)
+summary(Zoa_2factorialAOV) # date is a sig effect in raw data (not transformed!)
+TukeyHSD(Zoa_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(Zoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(zoa ~ Treatment * Date, data = Male_hist_2) # DOES NOT PASS homogeneity of variance; leveneTest is from the 'car' package
+plot(Zoa_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+Zoa_aov_residuals <- residuals(object = Zoa_2factorialAOV) # Extract the residuals
+shapiro.test(x = Zoa_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$zoa)
+####  ZOA TEST transformed #### #
+Zoa_2factorialAOV.transform <- aov(log(zoa+1) ~ Treatment * Date, data = Male_hist_2)
+summary(Zoa_2factorialAOV.transform) # still effect of Date in transformation
+TukeyHSD(Zoa_2factorialAOV.transform, which = "Date") # 02/21 > 01/23; increased with time
+plot(Zoa_2factorialAOV.transform, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(sqrt(zoa) ~ Treatment * Date, data = Male_hist_2) # DOES NOT PASS homogeneity of variance; leveneTest is from the 'car' package
+plot(Zoa_2factorialAOV.transform, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+Zoa_aov_residuals.transform <- residuals(object = Zoa_2factorialAOV.transform) # Extract the residuals
+shapiro.test(x = Zoa_aov_residuals.transform) # Run Shapiro-Wilk test; NORMAL
+hist(log(Male_hist_2$zoa)+1)
+# LUMEN TEST
+lumen_2factorialAOV <- aov(lumen ~ Treatment * Date, data = Male_hist_2)
+summary(lumen_2factorialAOV) # treatment and data are sig diff in raw data (not transformed!)
+TukeyHSD(lumen_2factorialAOV)
+TukeyHSD(lumen_2factorialAOV, which = "Treatment") # Low < Ambient
+TukeyHSD(lumen_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(lumen_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(lumen ~ Treatment * Date, data = Male_hist_2) # DOES NOT PASS homogeneity of varianceE; leveneTest is from the 'car' package
+plot(lumen_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+lumen_aov_residuals <- residuals(object = lumen_2factorialAOV) # Extract the residuals
+shapiro.test(x = lumen_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$lumen)
+####  lumen TEST transformed #### #
+lumen_2factorialAOV.transform <- aov(sqrt(lumen) ~ Treatment * Date, data = Male_hist_2)
+summary(lumen_2factorialAOV.transform) # same effects as raw data; no marginal interaction
+TukeyHSD(lumen_2factorialAOV.transform, which = "Treatment") # Low < Ambient
+TukeyHSD(lumen_2factorialAOV.transform, which = "Date") # 02/21 > 01/23; increased with time
+plot(lumen_2factorialAOV.transform, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(sqrt(lumen) ~ Treatment * Date, data = Male_hist_2) # DOES NOT PASS homogeneity of varianceE; leveneTest is from the 'car' package
+plot(lumen_2factorialAOV.transform, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+lumen_aov_residuals.transform <- residuals(object = lumen_2factorialAOV.transform) # Extract the residuals
+shapiro.test(x = lumen_aov_residuals.transform) # Run Shapiro-Wilk test; NORMAL
+hist(sqrt(Male_hist_2$lumen))
+hist(log(Male_hist_2$lumen))
+# CYTES TEST
+cytes_2factorialAOV <- aov(cytes ~ Treatment * Date, data = Male_hist_2)
+summary(cytes_2factorialAOV) # Date has a marginal diff (not transformed!)
+TukeyHSD(cytes_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(cytes_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(cytes ~ Treatment * Date, data = Male_hist_2) # PASSED homogeneity of variance; 0.3056
+plot(cytes_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+cytes_aov_residuals <- residuals(object = cytes_2factorialAOV) # Extract the residuals
+shapiro.test(x = cytes_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+####  cytes TEST transformed #### #
+cytes_2factorialAOV.transform <- aov(sqrt(cytes) ~ Treatment * Date, data = Male_hist_2)
+summary(cytes_2factorialAOV.transform) # additional effect of treatment!
+TukeyHSD(cytes_2factorialAOV.transform, which = "Treatment") # Low < Ambient
+plot(cytes_2factorialAOV.transform, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(sqrt(cytes) ~ Treatment * Date, data = Male_hist_2) # PASS homogeneity of variance; 0.2546
+plot(cytes_2factorialAOV.transform, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+cytes_aov_residuals.transform <- residuals(object = cytes_2factorialAOV.transform) # Extract the residuals
+shapiro.test(x = cytes_aov_residuals.transform) # Run Shapiro-Wilk test; NON NORMAL - 0.00325
+
+######################################################################### #
+##################      BOX PLOT MODEL    ############################### #
+######################################################################### #
+Male_hist_2$Treatment <- ordered(Male_hist_2$Treatment, levels = c("Ambient", "Low"))
+cb_Colors <- c("#4E84C4", "#D16103")
+# Zoa
+zoa_plot <- ggplot(Male_hist_2, aes(x = Date, y = zoa, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+zoa_plot # view the plot
+zoa_plot_transformed <- ggplot(Male_hist_2, aes(x = Date, y = sqrt(zoa), colour= Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+zoa_plot_transformed # view the plot
+# lumen
+lumen_plot <- ggplot(Male_hist_2, aes(x = Date, y = lumen, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+lumen_plot # view the plot
+lumen_plot_transformed <- ggplot(Male_hist_2, aes(x = Date, y = sqrt(lumen), colour= Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+lumen_plot_transformed # view the plot
+# cytes
+cytes_plot <- ggplot(Male_hist_2, aes(x = Date, y = cytes, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+cytes_plot # view the plot
+cytes_plot_transformed <- ggplot(Male_hist_2, aes(x = Date, y = log(cytes), colour= Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+cytes_plot_transformed # view the plot
+
+# grid plots
+ALL_PLOTS <- grid.arrange(zoa_plot, lumen_plot, cytes_plot,
+                          zoa_plot_transformed, lumen_plot_transformed, cytes_plot_transformed, ncol =3, nrow = 2)
+ALL_PLOTS # view plot
+#  SAVE
+ggsave(file="Grid_plot.pdf", ALL_PLOTS, width = 12, height = 8, units = c("in")) 
+
+
+######################################################################### #
+###LINEAR REG WITH STAGE AS INDEP VAR  ############################### #
+######################################################################### #
+Male_hist_2$Geoduck_ID <-Male_hist_2$ID
+staging_coltrim <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
+MaleHistStage_merge <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID")
+
+View(MaleHistStage_merge)
+
+MaleHistStage_221 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
+MaleHistStage_123 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
+
+MaleHistStage_low <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Low')
+MaleHistStage_ambient <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Ambient')
+
+
+# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$lumen, main="lumen ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$zoa, main="zoa ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$cytes, main="cytes ~ Reproductive stage")  # scatterplot
+# 
+# 
+# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$lumen, main="lumen ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$zoa, main="zoa ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$cytes, main="cytes ~ Reproductive stage")  # scatterplot
+# 
+# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$lumen, main="lumen ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$zoa, main="zoa ~ Reproductive stage")  # scatterplot
+# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$cytes, main="cytes ~ Reproductive stage")  # scatterplot
+# 
+# boxplot(lumen ~ Staging_number, data =MaleHistStage_merge)
+# abline(lm(lumen ~ Staging_number, data=MaleHistStage_merge))
+
+lumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), lumen)) +
+  geom_boxplot() +
+  theme_bw() +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+lumen_staging2 <-lumen_staging + theme(text = element_text(size = 20))# view plot
+
+zoa_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), zoa)) +
+  geom_boxplot() +
+  theme_bw() +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+zoa_staging2 <- zoa_staging + theme(text = element_text(size = 20))# view plot
+
+cytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), cytes)) +
+  geom_boxplot() +
+  theme_bw() +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+cytes_staging2 <-cytes_staging + theme(text = element_text(size = 20))  # view plot
+
+# grid plots
+staging_hist_plots <- grid.arrange(lumen_staging2, zoa_staging2, cytes_staging2, ncol =3, nrow = 1)
+staging_hist_plots # view plot
+#  SAVE
+ggsave(file="StagingHist_regression_plot.pdf", staging_hist_plots, width = 12, height = 8, units = c("in")) 
+
+### same plots but for Low and Ambient treatment
+
+lumen_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), lumen)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Lumen_Low") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+lumen_staging_LOW2 <-lumen_staging_LOW + theme(text = element_text(size = 20))# view plot
+
+lumen_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), lumen)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Lumen_Ambient") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+lumen_staging_AMBIENT2 <-lumen_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
+
+zoa_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), zoa)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Zoa_Low") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+zoa_staging_LOW2 <- zoa_staging_LOW + theme(text = element_text(size = 20))# view plot
+
+zoa_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), zoa)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Zoa_Ambient") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+zoa_staging_AMBIENT2 <- zoa_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
+
+cytes_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), cytes)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Cytes_Low") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+cytes_staging_LOW2 <-cytes_staging_LOW + theme(text = element_text(size = 20))  # view plot
+
+cytes_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), cytes)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(title = "Cytes_Ambient") +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
+cytes_staging_AMBIENT2 <-cytes_staging_AMBIENT + theme(text = element_text(size = 20))  # view plot
+
+# grid plots
+staging_hist_plots_TREATMENTS <- grid.arrange(lumen_staging_AMBIENT2, zoa_staging_AMBIENT2, cytes_staging_AMBIENT2, 
+                                   lumen_staging_LOW2, zoa_staging_LOW2, cytes_staging_LOW2, ncol =3, nrow = 2)
+staging_hist_plots_TREATMENTS # view plot
+#  SAVE
+ggsave(file="StagingHist_regressionTREATMENT_plot.pdf", staging_hist_plots_TREATMENTS, width = 12, height = 8, units = c("in")) 
+
+
+######################################################################### #
+################## PROPORTIONS BAR CHART  ############################### #
+######################################################################### #
+
 # call subset for plotting and pivot longer with tidyr
 colnames(Male_hist_2)
 Male_hist_plots <- Male_hist_2[,c(1:3,9:11)]
-
 Male_hist_plots_long <- Male_hist_plots %>% 
   tidyr::pivot_longer(cols = c(4:6), names_to='prop_metric', values_to='value')
-
-
 # change labels for plotting with gsub
 Male_hist_plots_long$Date <- gsub("20190123", "72",Male_hist_plots_long$Date)
 Male_hist_plots_long$Date <- gsub("20190221", "93 + 8 day recovery",Male_hist_plots_long$Date)
-
 Male_hist_plots_long$prop_metric <- gsub("perc_cytes", "spermatocytes",Male_hist_plots_long$prop_metric)
 Male_hist_plots_long$prop_metric <- gsub("perc_zoa", "spermatozoa",Male_hist_plots_long$prop_metric)
 Male_hist_plots_long$prop_metric <- gsub("perc_lumen", "lumen",Male_hist_plots_long$prop_metric)
-
 #convert metric to ordered factor
 Male_hist_plots_long_ordered <- Male_hist_plots_long[order(Male_hist_plots_long$prop_metric ),]
-
 Male_hist_plots_long_ordered$prop_metric <- factor(Male_hist_plots_long_ordered$prop_metric, levels = rev(c(rep("lumen",1), rep("spermatocytes",1), rep("spermatozoa",1))))
-
-
 Male_hist_plots_long_ordered_2 <- Male_hist_plots_long_ordered%>%
   group_by(Date, Treatment, prop_metric) %>% 
-  summarise(mean = mean(value), sd =sd(value)) %>% 
+  dplyr::summarise(mean = mean(value), sd =sd(value)) %>% 
   mutate(y_pos = cumsum(mean))
-
-
 # stacked proportion plot
 pd <- position_dodge2(width = 0.2)
-
 Male_hist_plots_long_ordered_2$prop_metric <- as.character(Male_hist_plots_long_ordered_2$prop_metric)
-
 ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y = mean, fill = Treatment, alpha = prop_metric)) + 
   geom_bar(stat = "identity") + 
   geom_errorbar(data = Male_hist_plots_long_ordered_2, mapping=aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 

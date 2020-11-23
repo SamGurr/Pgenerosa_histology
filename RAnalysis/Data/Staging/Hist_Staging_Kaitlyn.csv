@@ -1,0 +1,56 @@
+Tank,Treatment,Date,Slide Number,Geoduck_ID,Sex,"# oocytes/follicle (/3)
+or 
+% spermatids/acinus",Size of follicles/acini,Connective Tissue (5=less CT),"Stage 
+(Immature: very early active (1), early active (2)) 
+(Mature: late active (3), ripe (4))
+Spent (5)",Stage_ID,Staging_number,F: % Elongation,Notes
+3,Ambient,123,11,1,M,0-30%,Small-Medium,1,Early active,Early active,2,,"Most acini have little to no spermatids, few are around 30% spermatids"
+3,Ambient,123,12,4,M,30-50%,Medium,5,Late active,Late active,3,,
+3,Ambient,123,13,5,M,0-20%,Medium,3,Early active,Early active,2,,Very disorganized tissue- injury? Looks like it disrupts the formation of acini
+3,Ambient,123,14,13,F,3,Small,3,Early active,Early active,2,60,Follicles w/ more oocytes have more on the follicular wall. Oocytes appear well developed- posibly late active but poorly developed?. Some tissue disorganization.
+3,Ambient,123,15,17,F,11,Medium-Large,5,Late active,Late active,3,60,
+4,Ambient,123,16,_041,M,30-40%,Small,4,Late active,Late active,3,,Densely packed
+4,Ambient,123,17,_044,M,30-40%,Medium,2,Late active,Late active,3,,
+4,Ambient,123,18,45,F,14,Medium,5,Ripe,Ripe,4,50,
+4,Ambient,123,19,50,F,5,Small,3,Late active,Late active,3,40,Lots of CT around groups of follicles but not neccessarily a lot b/w follicles
+4,Ambient,123,20,52,F,12,Large,5,Ripe,Ripe,4,40,
+1,Low,123,1,_018,M,30-60%,Medium,2,Early active,Early active,2,,Lare variation in spermatids/acinus
+1,Low,123,2,16,M,<5%,Small,2,Early active,Early active,2,,Early in this stage of development
+1,Low,123,3,6,F,6,Small,1,Early active,Early active,2,90,"Low oocytes, but futher in development. Many on follicle wall- reabsorbtion?"
+1,Low,123,4,3,M,0-30%,Large,4,Early active,Early active,2,,Evenly distributed spermatid %; acini shapes consistent
+1,Low,123,5,_013,M,20-60%,Medium,2,Early active,Early active,2,,Highly variable spermatids/acinus
+2,Low,123,6,23,M,0%,Small,1,Very early active,Very early,1,,"No spermatids present, some spermatogonia activy begining in acini"
+2,Low,123,7,28,F,8,Large,4,Late Active,Late active,3,80,Manny oocytes on wall- reabsorbtion?
+2,Low,123,8,34,F,3,Small,2,Early active,Early active,2,50-60,
+2,Low,123,9,_037,M,0-40%,Large,3,Early active,Early active,2,,Most acinii have low % spermatids; seems like normal development
+2,Low,123,10,_040,M,10-50%,Small,2,Early active,Early active,2,,"Small, long and thin acini that are somewhat clumped w/ variable % spermatids"
+3,Ambient,221,3,3,F,?,?,?,Reabsorbing/Spent/Bad Processing?,Spent,5,?,Possibly high prescence of lymph and lymphocytes
+3,Ambient,221,8,8,F,?,Large,5,Reabsorbing/Spent/Bad Processing?,Spent,5,?,Lots of damage to oocytes in follicles- fragmented/shriveled
+3,Ambient,221,14,14,F,12,Very Large,5,Ripe,Ripe,4,30-40,Variable # oocytes/follicle
+3,Ambient,221,7,7,F,6,Small,3,"Early active- small follicles
+or
+Late active- high volume eggs",Early active,2,70,"High volume, ripe eggs in some follicles; sample does not capture a lot of follicle"
+3,Ambient,221,15,15,M,0-70%,Variable,5,"Early active- small acini w/ no spermatids
+or
+Late active- large acini with lots of spermatids",Early active,2,,Variable spermatids % and variable acini size
+3,Ambient,221,6,6,F,7,Medium-Large,5,Ripe,Ripe,4,30,
+4,Ambient,221,42,_042,M,0-70%,Small-Large,5,"Early active- large, high % spermatids acini
+or
+Late active- many small, 0% acini",Early active,2,,Variable development observed but the sample is not capturing many acini (small cut); egg visible in lumen
+4,Ambient,221,57,57,F,5,Medium,4,Late Active (few eggs/follicle) or Ripe (high volume eggs),Late active,3,50,
+4,Ambient,221,56,_056,M,60-90%,Small-Large,3,Late Active (few eggs/follicle) or Ripe (high volume eggs),Late active,3,,Some small acini with no spermatids present
+4,Ambient,221,53,53,F,8,Small,2,Early active,Early active,2,70,Few follicles visible in cut
+4,Ambient,221,60,60,F,9,Medium,3,Early active,Early active,2,70,
+4,Ambient,221,59,59,F,32,Large,5,Ripe,Ripe,4,20-Oct,Possibly some spent- large follicles with broken connective tissue in between
+1,Low,221,12,_012,M,90%,Large,4,Ripe,Ripe,4,,Odd cut- some acini appear small and undeveloped but in other areas they are very large and highly developed (made charateristics based on more developed area)
+1,Low,221,9,9,F,14,Large,5,Ripe,Ripe,4,15-20,Many desnsely packed follicles
+1,Low,221,20,_020,M,60-90%,Large,3,Late active,Late active,3,,
+1,Low,221,7,_007,M,30-60% (non-spent only),Medium-Large,3,Ripe with some spent,Ripe,4,,Some acini appear empty near where spermatids were- assuming this means they are spent
+1,Low,221,14,_014,M,10-30%,Small-Large,2,Early active,Early active,2,,Few acini visible
+1,Low,221,2,_002,M,70-90%,Large,5,Ripe,Ripe,4,,
+1,Low,221,15,15,F,10,Medium,4,Early active,Early active,2,70,Many oocytes budding off follicle wall
+2,Low,221,25,25,F,6,Small-Medium,4,Late active,Late active,3,40,Few follicles visible in cut
+2,Low,221,38,_038,M,10%,Very small,1,Early active,Early active,2,,Stage could be because of odd cut
+2,Low,221,32,32,M,10-20%,Small,2,Early active,Early active,2,,
+2,Low,221,29,_029,M,10-30%,Medium-Large,3,Early active,Early active,2,,
+2,Low,221,26,_026,M,50-80%,Medium,3,Late Active,Late active,3,,
