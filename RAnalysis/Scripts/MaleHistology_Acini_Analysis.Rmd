@@ -1,0 +1,230 @@
+---
+title: "MaleHistology_Acini_Analysis"
+author: "Samuel Gurr"
+date: "December 16, 2020"
+output: html_document
+tags: geoduck pH reproductive development histology
+---
+
+# Load libraries
+```{r}
+library(dplyr)          # Version 0.7.6, Packaged: 2018-06-27, Depends: R (>= 3.1.2)Imports: assertthat (>= 0.2.0), bindrcpp (>= 0.2.0.9000), glue (>=1.1.1), magrittr (>= 1.5), methods, pkgconfig (>= 2.0.1), R6(>= 2.2.2), Rcpp (>= 0.12.15), rlang (>= 0.2.0), tibble (>=1.3.1), tidyselect (>= 0.2.3), utils
+library(ggplot2)        # Version 2.2.1, Packaged: 2016-12-30, Depends: R (>= 3.1)Imports: digest, grid, gtable (>= 0.1.1), MASS, plyr (>= 1.7.1),reshape2, scales (>= 0.4.1), stats, tibble, lazyeval
+library(tidyr)
+library(ggpubr)
+library(car)
+library(gridExtra)
+```
+
+# set wd and Load data
+```{r}
+setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data") #set working
+staging<-read.csv("Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
+Male_hist<-read.csv("Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
+head(staging)
+head(Male_hist)
+```
+
+# PIVOT THE TABLE TO CALC PROPORTION VALUES RELATIVE TO TOTAL AREA
+
+```{r}
+Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
+  tidyr::pivot_wider(names_from=type, values_from=Area)
+Male_hist_2$perc_zoa <- (Male_hist_2$zoa/Male_hist_2$total_area)*100 # percent area of spermatozoa
+Male_hist_2$perc_cytes <- ((Male_hist_2$cytes_zoa - Male_hist_2$zoa)/Male_hist_2$total_area)*100 # percent area of spermatocytes
+Male_hist_2$perc_lumen <- (Male_hist_2$lumen/Male_hist_2$total_area)*100 # percent area of lumen
+Male_hist_2$cytes <- (Male_hist_2$cytes_zoa - Male_hist_2$zoa) # area of spermatocytes
+head(Male_hist_2)
+```
+
+#   TWO WAY ANOVAs (proprtion.hist.trait ~ treatment × date)
+```{r}
+Male_hist_2$Date <- as.character(Male_hist_2$Date) # make Date a character variable!
+# PERC ZOA TEST
+PERCZoa_2factorialAOV <- aov(perc_zoa ~ Treatment * Date, data = Male_hist_2)
+summary(PERCZoa_2factorialAOV) # date is a sig effect in raw data (not transformed!)
+TukeyHSD(PERCZoa_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(PERCZoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_zoa ~ Treatment * Date, data = Male_hist_2) # PASSES
+plot(PERCZoa_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERCZoa_aov_residuals <- residuals(object = PERCZoa_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERCZoa_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$perc_zoa)
+dev.off()
+```
+```{r}
+# PERC LUMEN 
+PERClumen_2factorialAOV <- aov(perc_lumen ~ Treatment * Date, data = Male_hist_2)
+summary(PERClumen_2factorialAOV) # treatment and data are sig diff in raw data (not transformed!)
+TukeyHSD(PERClumen_2factorialAOV, which = "Date") 
+plot(PERClumen_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_lumen ~ Treatment * Date, data = Male_hist_2) # PASSES
+plot(PERClumen_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERClumen_aov_residuals <- residuals(object = PERClumen_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERClumen_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$perc_lumen)
+dev.off()
+```
+
+```{r}
+# PERC CYTES 
+PERCcytes_2factorialAOV <- aov(perc_cytes ~ Treatment * Date, data = Male_hist_2)
+summary(PERCcytes_2factorialAOV) # Date has a marginal diff (not transformed!)
+TukeyHSD(PERCcytes_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(PERCcytes_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_cytes ~ Treatment * Date, data = Male_hist_2) # PASSED homogeneity of variance
+plot(PERCcytes_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERCcytes_aov_residuals <- residuals(object = PERCcytes_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERCcytes_aov_residuals) # Run Shapiro-Wilk test;  NORMAL
+dev.off()
+```
+
+# BOXPLOTS RAW AREA DATA
+
+```{r}
+Male_hist_2$Treatment <- ordered(Male_hist_2$Treatment, levels = c("Ambient", "Low"))
+cb_Colors <- c("#4E84C4", "#D16103")
+# Zoa
+zoa_plot <- ggplot(Male_hist_2, aes(x = Date, y = zoa, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# lumen
+lumen_plot <- ggplot(Male_hist_2, aes(x = Date, y = lumen, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# cytes
+cytes_plot <- ggplot(Male_hist_2, aes(x = Date, y = cytes, colour = Treatment)) +
+  theme_bw() +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# grid plots
+ALL_PLOTS <- grid.arrange(zoa_plot, lumen_plot, cytes_plot, ncol =3, nrow = 1)
+ALL_PLOTS # view plot
+
+```
+
+# BOXPLOTS PROPORTION DATA
+
+```{r}
+# Zoa
+zoa_plot_PERC <- ggplot(Male_hist_2, aes(x = Date, y = perc_zoa, colour = Treatment)) +
+  theme_bw() +
+  ylim(0,100) +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# lumen
+lumen_plot_PERC <- ggplot(Male_hist_2, aes(x = Date, y = perc_lumen, colour = Treatment)) +
+  theme_bw() +
+  ylim(0,100) +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# cytes
+cytes_plot_PERC <- ggplot(Male_hist_2, aes(x = Date, y = perc_cytes, colour = Treatment)) +
+  theme_bw() +
+  ylim(0,100) +
+  geom_boxplot(outlier.size = 1, position=position_dodge(0.9), fill = "white") +
+  geom_point(pch = 21, size = 3, fill = "white", position = position_jitterdodge(0.2)) +
+  scale_color_manual(values=cb_Colors)
+# grid plots
+ALL_PLOTS_PERC <- grid.arrange(zoa_plot_PERC, lumen_plot_PERC, cytes_plot_PERC, ncol =3, nrow = 1)
+ALL_PLOTS_PERC # view plot
+```
+
+# BOXPLOTS WITH STAGING 
+```{r}
+Male_hist_2$Geoduck_ID <-Male_hist_2$ID
+staging_coltrim <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
+MaleHistStage_merge <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID")
+
+MaleHistStage_221 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
+MaleHistStage_123 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
+
+MaleHistStage_low <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Low')
+MaleHistStage_ambient <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Ambient')
+
+PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_lumen, fill= Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERClumen_staging2 <-PERClumen_staging + theme(text = element_text(size = 15))# view plot
+
+PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_zoa, fill= Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Spermatozoa (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERCzoa_staging2 <- PERCzoa_staging + theme(text = element_text(size = 15))# view plot
+
+PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_cytes, fill= Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Spermatocytes (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERCcytes_staging2 <-PERCcytes_staging + theme(text = element_text(size = 15))  # view plot
+
+# grid plots
+staging_hist_plots <- grid.arrange(PERClumen_staging2, PERCzoa_staging2, PERCcytes_staging2, ncol =3, nrow = 1)
+staging_hist_plots # view plot
+```
+
+
+# STACKED PROPORTIONS BAR CHART
+```{r}
+
+# call subset for plotting and pivot longer with tidyr
+colnames(Male_hist_2)
+Male_hist_plots <- Male_hist_2[,c(1:3,9:11)]
+Male_hist_plots_long <- Male_hist_plots %>% 
+  tidyr::pivot_longer(cols = c(4:6), names_to='prop_metric', values_to='value')
+# change labels for plotting with gsub
+Male_hist_plots_long$Date <- gsub("20190123", "72",Male_hist_plots_long$Date)
+Male_hist_plots_long$Date <- gsub("20190221", "93 + 8 day recovery",Male_hist_plots_long$Date)
+Male_hist_plots_long$prop_metric <- gsub("perc_cytes", "spermatocytes",Male_hist_plots_long$prop_metric)
+Male_hist_plots_long$prop_metric <- gsub("perc_zoa", "spermatozoa",Male_hist_plots_long$prop_metric)
+Male_hist_plots_long$prop_metric <- gsub("perc_lumen", "lumen",Male_hist_plots_long$prop_metric)
+#convert metric to ordered factor
+Male_hist_plots_long_ordered <- Male_hist_plots_long[order(Male_hist_plots_long$prop_metric ),]
+Male_hist_plots_long_ordered$prop_metric <- factor(Male_hist_plots_long_ordered$prop_metric, levels = rev(c(rep("lumen",1), rep("spermatocytes",1), rep("spermatozoa",1))))
+Male_hist_plots_long_ordered_2 <- Male_hist_plots_long_ordered%>%
+  group_by(Date, Treatment, prop_metric) %>% 
+  dplyr::summarise(mean = mean(value), sd =sd(value)) %>% 
+  mutate(y_pos = cumsum(mean))
+# stacked proportion plot
+pd <- position_dodge2(width = 0.2)
+Male_hist_plots_long_ordered_2$prop_metric <- as.character(Male_hist_plots_long_ordered_2$prop_metric)
+
+STACKED_barplot <- ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y = mean, fill = Treatment, alpha = prop_metric)) + 
+  geom_bar(stat = "identity", width=0.7) + 
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_errorbar(aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 
+  facet_wrap(~Date)+ 
+  scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 
+  theme_bw() + 
+  scale_y_continuous(breaks = seq(from = 0, to = 100, by = 10)) + 
+  ylim(0,100) +
+  ylab("mean proportion of total acini area (%)") + 
+  theme(axis.title.x = element_blank(), axis.ticks.x = element_blank(), axis.text.x = element_blank()) 
+STACKED_barplot
+
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

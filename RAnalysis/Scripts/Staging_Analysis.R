@@ -12,6 +12,8 @@ library(dplyr)          # Version 0.7.6, Packaged: 2018-06-27, Depends: R (>= 3.
 library(ggplot2)        # Version 2.2.1, Packaged: 2016-12-30, Depends: R (>= 3.1)Imports: digest, grid, gtable (>= 0.1.1), MASS, plyr (>= 1.7.1),reshape2, scales (>= 0.4.1), stats, tibble, lazyeval
 library(tidyr)
 library(ggpubr)
+library(viridis)
+library(hrbrthemes)
 
 #set working directory--------------------------------------------------------------------------------------------------
 setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/") #set working
@@ -67,6 +69,39 @@ prop_Feb21_Male_Amb <- prop_Feb21_Male %>%
 
 prop_Feb21_Male_Low <- prop_Feb21_Male %>%
   dplyr::filter('Low' %in% Treatment)
+
+
+# STACKED BAR PLOT 
+
+# Stacked
+prop_ALL$Date_Treatment <- paste(prop_ALL$Date, prop_ALL$Treatment, sep ="_") # new column merges date and treat for stacked bar plots
+prop_female <- prop_ALL %>% dplyr::filter(Sex %in% 'F') # new dataset to plot JUST female histology
+prop_male <- prop_ALL %>% dplyr::filter(Sex %in% 'M')  # new dataset to plot JUST male histology
+
+StackedBar_FEMALE <- ggplot(prop_female, aes(fill=Stage_ID, y= n, x=Date_Treatment)) + 
+                      geom_bar(position="stack", stat="identity") +
+                      scale_fill_viridis(discrete = T) +
+                      ggtitle("Female histology staging") +
+                      theme_ipsum() +
+                      xlab("Date_Treatment") +
+                      ylab("number of samples")
+StackedBar_FEMALE# view plot
+
+StackedBar_MALE <- ggplot(prop_male, aes(fill=Stage_ID, y= n, x=Date_Treatment)) + 
+                      geom_bar(position="stack", stat="identity") +
+                      scale_fill_viridis(discrete = T) +
+                      ggtitle("Male histology staging") +
+                      theme_ipsum() +
+                      xlab("Date_Treatment") +
+                      ylab("number of samples")
+StackedBar_MALE# view plot
+
+# grid plots
+StackedBar_Plots <- grid.arrange(StackedBar_FEMALE, StackedBar_MALE, ncol =2, nrow = 1)
+StackedBar_Plots # view plot
+#  SAVE
+ggsave(file="Stacked_barplots_Staging.pdf", StackedBar_Plots, width = 24, height = 12, units = c("in")) 
+
 
 # DONUT PLOTS
 F_amb_123 <- ggdonutchart(prop_Jan23_Female_Amb, "prop", label = "Stage_ID",

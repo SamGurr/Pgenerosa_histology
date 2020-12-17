@@ -27,7 +27,7 @@ staging<-read.csv("Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.stri
 staging
 Male_hist<-read.csv("Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
 Male_hist # view data
-Male_hist$Area = as.numeric(dat$Area)
+Male_hist$Area = as.numeric(Male_hist$Area)
 # PIVOT THE TABLE TO CALC RELATIVE VALUES--------------------------------------------------------------
 Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
   tidyr::pivot_wider(names_from=type, values_from=Area)
@@ -108,6 +108,47 @@ plot(cytes_2factorialAOV.transform, 2)  # TEST ASSUMPTIONS    # 2. Normality - Q
 cytes_aov_residuals.transform <- residuals(object = cytes_2factorialAOV.transform) # Extract the residuals
 shapiro.test(x = cytes_aov_residuals.transform) # Run Shapiro-Wilk test; NON NORMAL - 0.00325
 
+
+
+
+
+
+######################################################################### #
+##################      TWO-WAY ANOVA PROPORTION     ############################### #
+######################################################################### #
+# PERC ZOA TEST
+PERCZoa_2factorialAOV <- aov(perc_zoa ~ Treatment * Date, data = Male_hist_2)
+summary(PERCZoa_2factorialAOV) # date is a sig effect in raw data (not transformed!)
+TukeyHSD(PERCZoa_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(PERCZoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_zoa ~ Treatment * Date, data = Male_hist_2) # PASSES
+plot(PERCZoa_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERCZoa_aov_residuals <- residuals(object = PERCZoa_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERCZoa_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$perc_zoa)
+
+# PERC LUMEN TEST
+PERClumen_2factorialAOV <- aov(perc_lumen ~ Treatment * Date, data = Male_hist_2)
+summary(PERClumen_2factorialAOV) # treatment and data are sig diff in raw data (not transformed!)
+TukeyHSD(PERClumen_2factorialAOV, which = "Date") 
+plot(PERClumen_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_lumen ~ Treatment * Date, data = Male_hist_2) # PASSES
+plot(PERClumen_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERClumen_aov_residuals <- residuals(object = PERClumen_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERClumen_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
+hist(Male_hist_2$perc_lumen)
+
+# PERC CYTES TEST
+PERCcytes_2factorialAOV <- aov(perc_cytes ~ Treatment * Date, data = Male_hist_2)
+summary(PERCcytes_2factorialAOV) # Date has a marginal diff (not transformed!)
+TukeyHSD(PERCcytes_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
+plot(PERCcytes_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+leveneTest(perc_cytes ~ Treatment * Date, data = Male_hist_2) # PASSED homogeneity of variance
+plot(PERCcytes_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+PERCcytes_aov_residuals <- residuals(object = PERCcytes_2factorialAOV) # Extract the residuals
+shapiro.test(x = PERCcytes_aov_residuals) # Run Shapiro-Wilk test;  NORMAL
+
+
 ######################################################################### #
 ##################      BOX PLOT MODEL    ############################### #
 ######################################################################### #
@@ -168,102 +209,95 @@ Male_hist_2$Geoduck_ID <-Male_hist_2$ID
 staging_coltrim <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
 MaleHistStage_merge <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID")
 
-View(MaleHistStage_merge)
-
 MaleHistStage_221 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
 MaleHistStage_123 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
 
 MaleHistStage_low <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Low')
 MaleHistStage_ambient <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Ambient')
 
-
-# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$lumen, main="lumen ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$zoa, main="zoa ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_221$Staging_number, y=MaleHistStage_221$cytes, main="cytes ~ Reproductive stage")  # scatterplot
-# 
-# 
-# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$lumen, main="lumen ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$zoa, main="zoa ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_123$Staging_number, y=MaleHistStage_123$cytes, main="cytes ~ Reproductive stage")  # scatterplot
-# 
-# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$lumen, main="lumen ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$zoa, main="zoa ~ Reproductive stage")  # scatterplot
-# scatter.smooth(x=MaleHistStage_merge$Staging_number, y=MaleHistStage_merge$cytes, main="cytes ~ Reproductive stage")  # scatterplot
-# 
-# boxplot(lumen ~ Staging_number, data =MaleHistStage_merge)
-# abline(lm(lumen ~ Staging_number, data=MaleHistStage_merge))
-
-lumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), lumen)) +
+PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_lumen, fill= Treatment)) +
   geom_boxplot() +
-  theme_bw() +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-lumen_staging2 <-lumen_staging + theme(text = element_text(size = 20))# view plot
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERClumen_staging2 <-PERClumen_staging + theme(text = element_text(size = 15))# view plot
 
-zoa_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), zoa)) +
+PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_zoa, fill= Treatment)) +
   geom_boxplot() +
-  theme_bw() +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-zoa_staging2 <- zoa_staging + theme(text = element_text(size = 20))# view plot
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Spermatozoa (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERCzoa_staging2 <- PERCzoa_staging + theme(text = element_text(size = 15))# view plot
 
-cytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), cytes)) +
+PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_cytes, fill= Treatment)) +
   geom_boxplot() +
-  theme_bw() +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-cytes_staging2 <-cytes_staging + theme(text = element_text(size = 20))  # view plot
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
+  theme_classic() +
+  labs(y=expression("Spermatocytes (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
+  theme(legend.position = "none")
+PERCcytes_staging2 <-PERCcytes_staging + theme(text = element_text(size = 15))  # view plot
 
 # grid plots
-staging_hist_plots <- grid.arrange(lumen_staging2, zoa_staging2, cytes_staging2, ncol =3, nrow = 1)
+staging_hist_plots <- grid.arrange(PERClumen_staging2, PERCzoa_staging2, PERCcytes_staging2, ncol =3, nrow = 1)
 staging_hist_plots # view plot
 #  SAVE
 ggsave(file="StagingHist_regression_plot.pdf", staging_hist_plots, width = 12, height = 8, units = c("in")) 
 
 ### same plots but for Low and Ambient treatment
 
-lumen_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), lumen)) +
+PERClumen_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), perc_lumen)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Lumen_Low") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-lumen_staging_LOW2 <-lumen_staging_LOW + theme(text = element_text(size = 20))# view plot
+PERClumen_staging_LOW2 <-PERClumen_staging_LOW + theme(text = element_text(size = 20))# view plot
 
-lumen_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), lumen)) +
+PERClumen_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), perc_lumen)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Lumen_Ambient") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-lumen_staging_AMBIENT2 <-lumen_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
+PERClumen_staging_AMBIENT2 <-PERClumen_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
 
-zoa_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), zoa)) +
+PERCzoa_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), perc_zoa)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Zoa_Low") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-zoa_staging_LOW2 <- zoa_staging_LOW + theme(text = element_text(size = 20))# view plot
+PERCzoa_staging_LOW2 <- PERCzoa_staging_LOW + theme(text = element_text(size = 20))# view plot
 
-zoa_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), zoa)) +
+PERCzoa_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), perc_zoa)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Zoa_Ambient") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-zoa_staging_AMBIENT2 <- zoa_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
+PERCzoa_staging_AMBIENT2 <- PERCzoa_staging_AMBIENT + theme(text = element_text(size = 20))# view plot
 
-cytes_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), cytes)) +
+PERCcytes_staging_LOW <- ggplot(MaleHistStage_low, aes(factor(Staging_number), perc_cytes)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Cytes_Low") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-cytes_staging_LOW2 <-cytes_staging_LOW + theme(text = element_text(size = 20))  # view plot
+PERCcytes_staging_LOW2 <-PERCcytes_staging_LOW + theme(text = element_text(size = 20))  # view plot
 
-cytes_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), cytes)) +
+PERCcytes_staging_AMBIENT <- ggplot(MaleHistStage_ambient, aes(factor(Staging_number), perc_cytes)) +
   geom_boxplot() +
   theme_bw() +
   labs(title = "Cytes_Ambient") +
   geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1))
-cytes_staging_AMBIENT2 <-cytes_staging_AMBIENT + theme(text = element_text(size = 20))  # view plot
+PERCcytes_staging_AMBIENT2 <-PERCcytes_staging_AMBIENT + theme(text = element_text(size = 20))  # view plot
 
 # grid plots
-staging_hist_plots_TREATMENTS <- grid.arrange(lumen_staging_AMBIENT2, zoa_staging_AMBIENT2, cytes_staging_AMBIENT2, 
-                                   lumen_staging_LOW2, zoa_staging_LOW2, cytes_staging_LOW2, ncol =3, nrow = 2)
+staging_hist_plots_TREATMENTS <- grid.arrange(PERClumen_staging_AMBIENT2, PERCzoa_staging_AMBIENT2, PERCcytes_staging_AMBIENT2, 
+                                              PERClumen_staging_LOW2, PERCzoa_staging_LOW2, PERCcytes_staging_LOW2, ncol =3, nrow = 2)
 staging_hist_plots_TREATMENTS # view plot
 #  SAVE
 ggsave(file="StagingHist_regressionTREATMENT_plot.pdf", staging_hist_plots_TREATMENTS, width = 12, height = 8, units = c("in")) 
@@ -294,17 +328,139 @@ Male_hist_plots_long_ordered_2 <- Male_hist_plots_long_ordered%>%
 # stacked proportion plot
 pd <- position_dodge2(width = 0.2)
 Male_hist_plots_long_ordered_2$prop_metric <- as.character(Male_hist_plots_long_ordered_2$prop_metric)
-ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y = mean, fill = Treatment, alpha = prop_metric)) + 
-  geom_bar(stat = "identity") + 
-  geom_errorbar(data = Male_hist_plots_long_ordered_2, mapping=aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 
-  facet_wrap(~Date)+ scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 
+
+proportion_Figure <- ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y = mean, fill = Treatment, alpha = prop_metric)) + 
+  geom_bar(stat = "identity", width=0.7) + 
+  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  geom_errorbar(aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 
+  facet_wrap(~Date)+ 
+  scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 
   theme_bw() + 
   scale_y_continuous(breaks = seq(from = 0, to = 100, by = 10)) + 
+  ylim(0,100) +
   ylab("mean proportion of total acini area (%)") + 
   theme(axis.title.x = element_blank(), axis.ticks.x = element_blank(), axis.text.x = element_blank()) 
-dev.off()
+proportion_Figure
+
+#  SAVE
+ggsave(file="Proportion_MaleHist_plot.pdf", proportion_Figure, width = 12, height = 8, units = c("in")) 
+
+################################################## #
+################################################## #
+######   Contingency Table  & Chi-sq test  ####### #
+################################################## #
+
+# load libraries for chisq analysis and figures
+library(reshape)
+library(reshape2)
+library(gplots)
+library(corrplot)
+# Run with ID combining both treatment and date
+Male_hist_cont_table <- Male_hist_2  %>%  dplyr::select(Date, Treatment, perc_cytes, perc_lumen, perc_zoa)
+Male_hist_cont_table
+
+Male_hist_cont_table <-
+  Male_hist_2 %>%
+  group_by(Treatment,Date) %>%
+  summarize(
+    prop_zoa    = mean(perc_zoa, na.rm = TRUE),
+    prop_cytes  = mean(perc_cytes, na.rm = TRUE),
+    prop_lumen  = mean(perc_lumen, na.rm = TRUE))
+Male_hist_cont_table # view the table
+
+Male_contingencyTable <- Male_hist_cont_table %>% pivot_longer(
+  Male_hist_cont_table,
+  cols = starts_with("prop"),
+  names_to = "hist_meas",
+  values_to = "value")
+Male_contingencyTable$ID <- paste(substr(Male_contingencyTable$Treatment,1,1), substr(Male_contingencyTable$Date,5,8), sep='_')
+Male_contingencyTable2 <- Male_contingencyTable %>% dplyr::select(c(ID,value,hist_meas))
+Male_contingencyTable2 <- Male_contingencyTable2[,-1]
+
+Male_contingencyTable2 <- cast(Male_contingencyTable2, hist_meas~ID) # cast to move categorical treatments as columns
+MATRIX_Male_contingencyTable2 <- as.table(as.matrix(Male_contingencyTable2)) # 1. convert the data as a table
+
+balloonplot(t(MATRIX_Male_contingencyTable2), main ="ID", xlab ="", ylab="", label = FALSE, show.margins = FALSE) # 2. Graph
+
+chisq <- chisq.test(MATRIX_Male_contingencyTable2) # Chi squared test
+chisq # note: df = num row -1 * num col -1 - Chi Sq test is NOT significant
+round(chisq$observed,2) # Observed rounded to 2 sig figs
+round(chisq$expected,2) # Expected  rounded to 2 sig figs
+round(chisq$residuals, 3) # Pearson residuals can be easily extracted from the output of the function chisq.test():
+corrplot(chisq$residuals, is.cor = FALSE) # visualize Pearson residuals using the package corrplot:
+contrib <- 100*chisq$residuals^2/chisq$statistic # Contibution in percentage (%)
+round(contrib, 3)
+corrplot(contrib, is.cor = FALSE) # Visualize the contribution
+# Although chi-square was not significant - 
+# observed patterns reinforce results from the two-way ANOVA 
+# showing a decrease in spermatocytes with time and an increase 
+# in spermatozoa with time. This 'seesaw' effect suggests that 
+# male P. generosa are able to continue reproductive development 
+# regardless of pCO2 treatment
+
+# NOTE: since we do see an affect of time in ANOVA - run with time and without treatment chi-squared
+# Run with ID just as time
+Male_hist_cont_table3 <-
+  Male_hist_2 %>%
+  group_by(Date) %>%
+  summarize(
+    prop_zoa    = mean(perc_zoa, na.rm = TRUE),
+    prop_cytes  = mean(perc_cytes, na.rm = TRUE),
+    prop_lumen  = mean(perc_lumen, na.rm = TRUE))
+Male_hist_cont_table3 <- Male_hist_cont_table3 %>% pivot_longer(
+  Male_hist_cont_table,
+  cols = starts_with("prop"),
+  names_to = "hist_meas",
+  values_to = "value")
+Male_hist_cont_table3 # view the table
+Male_hist_cont_table3$Date <- as.character(substr(Male_hist_cont_table3$Date,5,8))
+Male_hist_cont_table3 <- cast(Male_hist_cont_table3, hist_meas~Date) # cast to move categorical treatments as columns
+MATRIX_Male_hist_cont_table3 <- as.table(as.matrix(Male_hist_cont_table3)) # 1. convert the data as a table
+
+balloonplot(t(MATRIX_Male_hist_cont_table3), main ="Date", xlab ="", ylab="", label = FALSE, show.margins = FALSE) # 2. Graph
+chisq.date <- chisq.test(MATRIX_Male_hist_cont_table3) # Chi squared test
+chisq.date # note: df = num row -1 * num col -1 - Chi Sq test is NOT significant
+round(chisq.date$observed,2) # Observed rounded to 2 sig figs
+round(chisq.date$expected,2) # Expected  rounded to 2 sig figs
+round(chisq.date$residuals, 3) # Pearson residuals can be easily extracted from the output of the function chisq.test():
+corrplot(chisq.date$residuals, is.cor = FALSE) # visualize Pearson residuals using the package corrplot:
+contrib.date <- 100*chisq.date$residuals^2/chisq.date$statistic # Contibution in percentage (%)
+round(contrib.date, 3)
+corrplot(contrib.date, is.cor = FALSE) # Visualize the contribution
 
 
+# contingency table with staging ID and treatment
+MaleHistStage_merge # dataset
+Male_hist_cont_table_STAGE <- MaleHistStage_merge  %>%  dplyr::select(Date, Treatment, Stage_ID, perc_cytes, perc_lumen, perc_zoa)
+Male_hist_cont_table_STAGE$ID <- paste(substr(Male_hist_cont_table_STAGE$Treatment, 1,3), Male_hist_cont_table_STAGE$Stage_ID, sep="_")
+Male_hist_cont_table_STAGE <- Male_hist_cont_table_STAGE %>% dplyr::select(ID, perc_cytes, perc_lumen, perc_zoa)
+Male_hist_cont_table_STAGE <-
+  Male_hist_cont_table_STAGE %>%
+  group_by(ID) %>%
+  summarize(
+    prop_zoa    = mean(perc_zoa, na.rm = TRUE),
+    prop_cytes  = mean(perc_cytes, na.rm = TRUE),
+    prop_lumen  = mean(perc_lumen, na.rm = TRUE))
+Male_hist_cont_table_STAGE <- Male_hist_cont_table_STAGE %>% pivot_longer(
+  Male_hist_cont_table_STAGE,
+  cols = starts_with("prop"),
+  names_to = "hist_meas",
+  values_to = "value")
+Male_hist_cont_table_STAGE # view the table
+
+Cont_table_STAGE <- cast(Male_hist_cont_table_STAGE, hist_meas~ID) # cast to move categorical treatments as columns
+MATRIX_Cont_table_STAGE <- as.table(as.matrix(Cont_table_STAGE)) # 1. convert the data as a table
+
+balloonplot(t(MATRIX_Cont_table_STAGE), main ="ID", xlab ="", ylab="", label = FALSE, show.margins = FALSE) # 2. Graph
+chisq.STAGE <- chisq.test(MATRIX_Cont_table_STAGE) # Chi squared test
+chisq.STAGE # note: df = num row -1 * num col -1 - Chi Sq test is NOT significant
+round(chisq.STAGE$observed,2) # Observed rounded to 2 sig figs
+round(chisq.STAGE$expected,2) # Expected  rounded to 2 sig figs
+round(chisq.STAGE$residuals, 3) # Pearson residuals can be easily extracted from the output of the function chisq.test():
+corrplot(chisq.STAGE$residuals, is.cor = FALSE) # visualize Pearson residuals using the package corrplot:
+contrib.STAGE<- 100*chisq.STAGE$residuals^2/chisq.STAGE$statistic # Contibution in percentage (%)
+round(contrib.STAGE, 3)
+corrplot(contrib.STAGE, is.cor = FALSE) # Visualize the contribution
 
 ################################################## #
 ################################################## #
@@ -312,8 +468,8 @@ dev.off()
 ################################################## #
 ########MIGHT BE THE WRONG APPROACH ############## #
 
-
 # CALC THE MEAN FOR EACH SAMPLE-------------------------------------------------------------------------
+Male_hist_2$ID2 <- as.numeric(Male_hist_2$ID)
 Means_Table <- Male_hist_2 %>%
   dplyr::select(-'acini_segment') %>% # remove unecessary columns
   group_by(ID,Treatment,Date) %>%
@@ -417,9 +573,6 @@ Final_Plot_Grid2 # view plot
 
 #  SAVE
 ggsave(file="Grid_plot.pdf", Final_Plot_Grid2, width = 12, height = 8, units = c("in")) 
-
-
-
 
 ################################################################# #
 ################################################################# #
