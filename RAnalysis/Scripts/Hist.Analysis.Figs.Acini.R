@@ -31,10 +31,12 @@ Male_hist$Area = as.numeric(Male_hist$Area)
 # PIVOT THE TABLE TO CALC RELATIVE VALUES--------------------------------------------------------------
 Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
   tidyr::pivot_wider(names_from=type, values_from=Area)
+Male_hist_2 <- Male_hist_2 %>% dplyr::select(-'total_area')
 # CALC RELATIVE VALUES---------------------------------------------------------------------------------
-Male_hist_2$perc_zoa <- (Male_hist_2$zoa/Male_hist_2$total_area)*100 # percent area of spermatozoa
-Male_hist_2$perc_cytes <- ((Male_hist_2$cytes_zoa - Male_hist_2$zoa)/Male_hist_2$total_area)*100 # percent area of spermatocytes
-Male_hist_2$perc_lumen <- (Male_hist_2$lumen/Male_hist_2$total_area)*100 # percent area of lumen
+Male_hist_2$TotalArea <- (Male_hist_2$lumen + Male_hist_2$zoa + (Male_hist_2$cytes_zoa - Male_hist_2$zoa))
+Male_hist_2$perc_zoa <- (Male_hist_2$zoa/Male_hist_2$TotalArea)*100 # percent area of spermatozoa
+Male_hist_2$perc_cytes <- ((Male_hist_2$cytes_zoa - Male_hist_2$zoa)/Male_hist_2$TotalArea)*100 # percent area of spermatocytes
+Male_hist_2$perc_lumen <- (Male_hist_2$lumen/Male_hist_2$TotalArea)*100 # percent area of lumen
 Male_hist_2$cytes <- (Male_hist_2$cytes_zoa - Male_hist_2$zoa) # area of spermatocytes
 # convert to characer
 typeof(Male_hist_2$ID) 
@@ -116,44 +118,36 @@ shapiro.test(x = cytes_aov_residuals.transform) # Run Shapiro-Wilk test; NON NOR
 ######################################################################### #
 ##################      TWO-WAY ANOVA PROPORTION     ############################### #
 ######################################################################### #
+par(mfrow=c(2,2)) # 2 by 2 grid for plotting
 # PERC ZOA TEST
 PERCZoa_2factorialAOV <- aov(perc_zoa ~ Treatment * Date, data = Male_hist_2)
 summary(PERCZoa_2factorialAOV) # date is a sig effect in raw data (not transformed!)
 TukeyHSD(PERCZoa_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
-par(mfrow=c(2,2))
-plot(PERCZoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Is there linearity of the relationship between predictors and responses
-plot(PERCZoa_2factorialAOV, 2) # TEST ASSUMPTIONS     # 2. qq plot - are the residuals following a normal distribution
-plot(PERCZoa_2factorialAOV, 3) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
-plot(PERCZoa_2factorialAOV, 4) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
-
-
-leveneTest(perc_zoa ~ Treatment * Date, data = Male_hist_2) # PASSES
-plot(PERCZoa_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
+plot(PERCZoa_2factorialAOV) # residuals look normal  - no influenctial outliers 
+leveneTest(perc_zoa ~ Treatment * Date, data = Male_hist_2) # PASS
 PERCZoa_aov_residuals <- residuals(object = PERCZoa_2factorialAOV) # Extract the residuals
-shapiro.test(x = PERCZoa_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
-hist(Male_hist_2$perc_zoa)
+shapiro.test(x = PERCZoa_aov_residuals) # Run Shapiro-Wilk test; PASS
+hist(Male_hist_2$perc_zoa) # right (positive) skew
 
 # PERC LUMEN TEST
 PERClumen_2factorialAOV <- aov(perc_lumen ~ Treatment * Date, data = Male_hist_2)
-summary(PERClumen_2factorialAOV) # treatment and data are sig diff in raw data (not transformed!)
-TukeyHSD(PERClumen_2factorialAOV, which = "Date") 
-plot(PERClumen_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+summary(PERClumen_2factorialAOV) # effect of treatment
+TukeyHSD(PERClumen_2factorialAOV, which = "Treatment")  # Low < Ambient -3.451896 % area
+plot(PERClumen_2factorialAOV) # residuals look normal  - no influenctial outliers 
 leveneTest(perc_lumen ~ Treatment * Date, data = Male_hist_2) # PASSES
-plot(PERClumen_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
 PERClumen_aov_residuals <- residuals(object = PERClumen_2factorialAOV) # Extract the residuals
 shapiro.test(x = PERClumen_aov_residuals) # Run Shapiro-Wilk test; NOT NORMAL
-hist(Male_hist_2$perc_lumen)
+hist(Male_hist_2$perc_lumen) # right (positive) skew
 
 # PERC CYTES TEST
 PERCcytes_2factorialAOV <- aov(perc_cytes ~ Treatment * Date, data = Male_hist_2)
-summary(PERCcytes_2factorialAOV) # Date has a marginal diff (not transformed!)
-TukeyHSD(PERCcytes_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
-plot(PERCcytes_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+summary(PERCcytes_2factorialAOV) # Date has a significant effect
+TukeyHSD(PERCcytes_2factorialAOV, which = "Date") # 02/21 < 01/23; cytes DECREASED with time -11.29722%
+plot(PERCcytes_2factorialAOV) # residuals look normal  - no influenctial outliers 
 leveneTest(perc_cytes ~ Treatment * Date, data = Male_hist_2) # PASSED homogeneity of variance
-plot(PERCcytes_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
 PERCcytes_aov_residuals <- residuals(object = PERCcytes_2factorialAOV) # Extract the residuals
-shapiro.test(x = PERCcytes_aov_residuals) # Run Shapiro-Wilk test;  NORMAL
-
+shapiro.test(x = PERCcytes_aov_residuals) # Run Shapiro-Wilk test;  PASS, normal
+hist(Male_hist_2$perc_cytes) # right (positive) skew
 
 ######################################################################### #
 ##################      BOX PLOT MODEL    ############################### #
@@ -343,7 +337,7 @@ proportion_Figure <- ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y
   scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 
   theme_bw() + 
   scale_y_continuous(breaks = seq(from = 0, to = 100, by = 10)) + 
-  ylim(0,100) +
+  ylim(0,110)+
   ylab("mean proportion of total acini area (%)") + 
   theme(axis.title.x = element_blank(), axis.ticks.x = element_blank(), axis.text.x = element_blank()) 
 proportion_Figure
