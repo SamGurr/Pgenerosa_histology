@@ -120,7 +120,13 @@ shapiro.test(x = cytes_aov_residuals.transform) # Run Shapiro-Wilk test; NON NOR
 PERCZoa_2factorialAOV <- aov(perc_zoa ~ Treatment * Date, data = Male_hist_2)
 summary(PERCZoa_2factorialAOV) # date is a sig effect in raw data (not transformed!)
 TukeyHSD(PERCZoa_2factorialAOV, which = "Date") # 02/21 > 01/23; increased with time
-plot(PERCZoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+par(mfrow=c(2,2))
+plot(PERCZoa_2factorialAOV, 1) # TEST ASSUMPTIONS     # 1. Is there linearity of the relationship between predictors and responses
+plot(PERCZoa_2factorialAOV, 2) # TEST ASSUMPTIONS     # 2. qq plot - are the residuals following a normal distribution
+plot(PERCZoa_2factorialAOV, 3) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+plot(PERCZoa_2factorialAOV, 4) # TEST ASSUMPTIONS     # 1. Homogeneity of variances (Levenes test) of the model data
+
+
 leveneTest(perc_zoa ~ Treatment * Date, data = Male_hist_2) # PASSES
 plot(PERCZoa_2factorialAOV, 2)  # TEST ASSUMPTIONS    # 2. Normality - QQ plot (quantile quantile) of the model residuals
 PERCZoa_aov_residuals <- residuals(object = PERCZoa_2factorialAOV) # Extract the residuals
