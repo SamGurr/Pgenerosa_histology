@@ -210,7 +210,7 @@ staging_coltrim        <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID',
 MaleHistStage_merge    <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID") %>% 
                                 dplyr::mutate(ID = gsub('.*_00', '', Geoduck_ID)) %>% 
                                 dplyr::mutate(ID = gsub('.*_0', '', Geoduck_ID))
-
+View(staging)
 MaleHistStage_221     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
 MaleHistStage_123     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
 
@@ -227,7 +227,8 @@ PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), per
                         theme_classic() +
                         labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
                         geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
-                        theme(legend.position = "none")
+                        theme(legend.position = "none") +
+                        facet_wrap(~Date)
 PERClumen_staging2 <-PERClumen_staging + theme(text = element_text(size = 15))# view plot
 PERClumen_staging2 # ambient is blue and elevated pCO2 is orange
 
@@ -242,7 +243,8 @@ PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(as.factor(Staging_number), pe
                     theme_classic() +
                     labs(y=expression("Spermatozoa (% area total acini)"), x=expression("Staging ID")) +
                     geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
-                    theme(legend.position = "none")
+                    theme(legend.position = "none") +
+                    facet_wrap(~Date)
                   PERCzoa_staging2 <- PERCzoa_staging + theme(text = element_text(size = 15))# view plot
 PERCzoa_staging2
 
@@ -258,16 +260,20 @@ PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), per
                       theme_classic() +
                       labs(y=expression("Spermatocytes (% area total acini)"), x=expression("Staging ID")) +
                       geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
-                      theme(legend.position = "none")
+                      theme(legend.position = "none") +
+                      facet_wrap(~Date)
 PERCcytes_staging2 <-PERCcytes_staging + theme(text = element_text(size = 15))  # view plot
 PERCcytes_staging2
 
 
 # grid plots
-staging_hist_plots <- grid.arrange(PERClumen_staging2, PERCzoa_staging2, PERCcytes_staging2, ncol =3, nrow = 1)
+staging_hist_plots <- grid.arrange(PERCcytes_staging2, PERCzoa_staging2, PERClumen_staging2, ncol =3, nrow = 1)
 staging_hist_plots # view plot
 #  SAVE
 ggsave(file="Output/StagingHist_regression_plot.pdf", staging_hist_plots, width = 14, height = 7, units = c("in")) 
+
+
+
 
 ### same plots but for Low and Ambient treatment
 
