@@ -15,7 +15,7 @@ library(ggpubr)
 library(car)
 library(gridExtra)
 #set working directory---------------------------------------------------------------------------------
-setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data") #set working
+setwd("C:/Users/samjg/Documents/Github_repositories/Pgenerosa_histology/RAnalysis") #set working
 
 
 ######################################################################### #
@@ -23,9 +23,9 @@ setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data")
 ######################################################################### #
 
 # UPLOAD DATA------------------------------------------------------------------------------------------
-staging<-read.csv("Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
+staging<-read.csv("Data/Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
 staging
-Male_hist<-read.csv("Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
+Male_hist<-read.csv("Data/Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
 Male_hist # view data
 Male_hist$Area = as.numeric(Male_hist$Area)
 # PIVOT THE TABLE TO CALC RELATIVE VALUES--------------------------------------------------------------
@@ -199,57 +199,75 @@ ALL_PLOTS <- grid.arrange(zoa_plot, lumen_plot, cytes_plot,
                           zoa_plot_transformed, lumen_plot_transformed, cytes_plot_transformed, ncol =3, nrow = 2)
 ALL_PLOTS # view plot
 #  SAVE
-ggsave(file="Grid_plot.pdf", ALL_PLOTS, width = 12, height = 8, units = c("in")) 
+ggsave(file="Output/Grid_plot.pdf", ALL_PLOTS, width = 12, height = 8, units = c("in")) 
 
 
 ######################################################################### #
 ###LINEAR REG WITH STAGE AS INDEP VAR  ############################### #
 ######################################################################### #
-Male_hist_2$Geoduck_ID <-Male_hist_2$ID
-staging_coltrim <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
-MaleHistStage_merge <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID")
+Male_hist_2$Geoduck_ID <- Male_hist_2$ID
+staging_coltrim        <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
+MaleHistStage_merge    <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID") %>% 
+                                dplyr::mutate(ID = gsub('.*_00', '', Geoduck_ID)) %>% 
+                                dplyr::mutate(ID = gsub('.*_0', '', Geoduck_ID))
 
-MaleHistStage_221 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
-MaleHistStage_123 <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
+MaleHistStage_221     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
+MaleHistStage_123     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
 
-MaleHistStage_low <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Low')
+MaleHistStage_low     <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Low')
 MaleHistStage_ambient <- MaleHistStage_merge %>% dplyr::filter(Treatment %in% 'Ambient')
 
-PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_lumen, fill= Treatment)) +
-  geom_boxplot() +
-  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
-  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
-  theme_classic() +
-  labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
-  theme(legend.position = "none")
+PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_lumen)) +
+                        geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+                        # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
+                        #geom_jitter(position = position_jitter()) +
+                        geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                         scale_color_manual(values = c("#00BFC4","#F8766D")) +
+                        # scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
+                        theme_classic() +
+                        labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
+                        geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+                        theme(legend.position = "none")
 PERClumen_staging2 <-PERClumen_staging + theme(text = element_text(size = 15))# view plot
+PERClumen_staging2 # ambient is blue and elevated pCO2 is orange
 
-PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_zoa, fill= Treatment)) +
-  geom_boxplot() +
-  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
-  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
-  theme_classic() +
-  labs(y=expression("Spermatozoa (% area total acini)"), x=expression("Staging ID")) +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
-  theme(legend.position = "none")
-PERCzoa_staging2 <- PERCzoa_staging + theme(text = element_text(size = 15))# view plot
 
-PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_cytes, fill= Treatment)) +
-  geom_boxplot() +
-  scale_fill_manual(values = c("#00BFC4","#F8766D")) +
-  geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.5))+
-  theme_classic() +
-  labs(y=expression("Spermatocytes (% area total acini)"), x=expression("Staging ID")) +
-  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=Treatment)) +
-  theme(legend.position = "none")
+PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(as.factor(Staging_number), perc_zoa)) +
+                    geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+                    # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
+                    #geom_jitter(position = position_jitter()) +
+                    geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                     scale_color_manual(values = c("#00BFC4","#F8766D")) +
+                    #scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
+                    theme_classic() +
+                    labs(y=expression("Spermatozoa (% area total acini)"), x=expression("Staging ID")) +
+                    geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+                    theme(legend.position = "none")
+                  PERCzoa_staging2 <- PERCzoa_staging + theme(text = element_text(size = 15))# view plot
+PERCzoa_staging2
+
+
+
+PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), perc_cytes)) +
+                      geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+                      # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
+                      #geom_jitter(position = position_jitter()) +
+                      geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                       scale_color_manual(values = c("#00BFC4","#F8766D")) +
+                      #scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
+                      theme_classic() +
+                      labs(y=expression("Spermatocytes (% area total acini)"), x=expression("Staging ID")) +
+                      geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+                      theme(legend.position = "none")
 PERCcytes_staging2 <-PERCcytes_staging + theme(text = element_text(size = 15))  # view plot
+PERCcytes_staging2
+
 
 # grid plots
 staging_hist_plots <- grid.arrange(PERClumen_staging2, PERCzoa_staging2, PERCcytes_staging2, ncol =3, nrow = 1)
 staging_hist_plots # view plot
 #  SAVE
-ggsave(file="StagingHist_regression_plot.pdf", staging_hist_plots, width = 12, height = 8, units = c("in")) 
+ggsave(file="Output/StagingHist_regression_plot.pdf", staging_hist_plots, width = 14, height = 7, units = c("in")) 
 
 ### same plots but for Low and Ambient treatment
 
@@ -300,7 +318,7 @@ staging_hist_plots_TREATMENTS <- grid.arrange(PERClumen_staging_AMBIENT2, PERCzo
                                               PERClumen_staging_LOW2, PERCzoa_staging_LOW2, PERCcytes_staging_LOW2, ncol =3, nrow = 2)
 staging_hist_plots_TREATMENTS # view plot
 #  SAVE
-ggsave(file="StagingHist_regressionTREATMENT_plot.pdf", staging_hist_plots_TREATMENTS, width = 12, height = 8, units = c("in")) 
+ggsave(file="Output/StagingHist_regressionTREATMENT_plot.pdf", staging_hist_plots_TREATMENTS, width = 12, height = 8, units = c("in")) 
 
 
 ######################################################################### #
@@ -332,6 +350,7 @@ Male_hist_plots_long_ordered_2$prop_metric <- as.character(Male_hist_plots_long_
 proportion_Figure <- ggplot(Male_hist_plots_long_ordered_2, aes(x = Treatment, y = mean, fill = Treatment, alpha = prop_metric)) + 
   geom_bar(stat = "identity", width=0.7) + 
   scale_fill_manual(values = c("#00BFC4","#F8766D")) +
+  #scale_fill_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
   geom_errorbar(aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 
   facet_wrap(~Date)+ 
   scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 

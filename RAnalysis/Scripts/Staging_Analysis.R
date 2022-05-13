@@ -14,13 +14,15 @@ library(tidyr)
 library(ggpubr)
 library(viridis)
 library(hrbrthemes)
-
+library(gridExtra)
+library(rstatix)
 #set working directory--------------------------------------------------------------------------------------------------
-setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/") #set working
+setwd("C:/Users/samjg/Documents/Github_repositories/paper-GeoduckReproDev_pH/data/histology/RAnalysis") #set working
 
 # upload data
-data<-read.csv("Data/Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
-data # view data
+histology<-read.csv("Data/Staging/Hist_Staging_Trigg_Crandall.csv", header=T, sep=",", na.string="NA", as.is=T) 
+histology # view data
+histology$Stage <- ifelse(is.na(histology$Stage_Crandall), histology$Stage_Trigg, histology$Stage_Crandall) # call Grace's Stages (Stage_Crandall) - however when NA (photos analyzed by Shelly only) replace with Stage_Trigg
 
 # RE: 'Stage' and 'Staging_number' columns
 # Immature: very early active (1),
@@ -43,6 +45,85 @@ prop_Jan23_Female <- prop_ALL %>% dplyr::filter('123' %in% Date) %>%  dplyr::fil
 prop_Jan23_Male <- prop_ALL %>% dplyr::filter('123' %in% Date) %>%  dplyr::filter('M' %in% Sex)
 prop_Feb21_Female <- prop_ALL %>% dplyr::filter('221' %in% Date) %>%  dplyr::filter('F' %in% Sex)
 prop_Feb21_Male <- prop_ALL %>% dplyr::filter('221' %in% Date) %>%  dplyr::filter('M' %in% Sex)
+
+
+
+
+
+
+
+prop_Jan23_Female # view for the row numbers in Low and Ambient
+Fem_Jan23 <-  as.table(rbind(c(0,60,40), c(66.7, 33.3, 0)))
+dimnames(Fem_Jan23) <- list(
+  group = c("Ambient", "Low"),
+  stage = c("stage5", "stage6", "stage7") )
+prop_test(Fem_Jan23) # significantly different! 
+
+
+
+
+prop_Feb21_Female # view for the row numbers in Low and Ambient
+Fem_Feb21 <- as.table(rbind(c(prop_Feb21_Female$prop[c(1:2)]), c(prop_Feb21_Female$prop[c(3:4)])))
+dimnames(Fem_Feb21) <- list(
+  group = c("Low", "Ambient"),
+  stage = c("stage6", "stage7") )
+prop_test(Fem_Feb21) # not significantly different!
+
+
+res <- prop.test(x = c(6, 2), 
+                 n = c(8, 3))
+res # p-value = 1
+
+res <- prop.test(x = c(2, 1), 
+                 n = c(8, 3))
+res # p-value = 1
+
+
+
+prop_Jan23_Male
+Male_Jan23 <- as.table(rbind(c(14.3,85.7,0), c(40,0,60)))
+dimnames(Male_Jan23) <- list(
+  group = c("Low", "Ambient"),
+  stage = c("stage1_2", "stage3_4","stage5")
+)
+prop_test(Male_Jan23) # significant
+
+res <- prop.test(x = c(6, 3), 
+                 n = c(7, 5))
+res # p-value = 0.7353 # stages 3 and 4 
+
+
+
+
+
+
+prop_Feb21_Male
+Male_Feb21 <- as.table(rbind(c(0,0,33.3, 66.7), c(22.2,11.1,44.4,22.2)))
+dimnames(Male_Feb21) <- list(
+  group = c("Ambient", "Low"),
+  stage = c("stage2", "stage3","stage4", "stage5")
+)
+prop_test(Male_Feb21) # significant!
+
+
+res <- prop.test(x = c(1, 4), 
+                 n = c(3, 9))
+res # p-value = 0.7353 # stages 3 and 4 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### separate datasets for six, date, and treatment 
 # female

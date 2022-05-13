@@ -15,7 +15,7 @@ library(tidyr)
 library(ggpubr)
 
 #set working directory--------------------------------------------------------------------------------------------------
-setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/") #set working
+setwd("C:/Users/samjg/Documents/Github_repositories/Pgenerosa_histology/RAnalysis") #set working
 
 # upload data
 dat<-read.csv("Data/20190123_male_scoring.csv", header=T, sep=",", na.string="NA", as.is=T) 
