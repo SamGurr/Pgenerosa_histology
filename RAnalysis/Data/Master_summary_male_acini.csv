@@ -1,4 +1,4 @@
-Meas_num,Date,Label,ID,Treatment,Area,acini_segment,type,hue,saturation,brightness
+Meas_num,Date,Label,ID,Treatment,Area,acini_segment,type,hue_range,saturation_range,brightness_range
 1,20190123,20190123-1-10X.jpg,1,Ambient,456.384,A,total_area,NA,NA,NA
 2,20190123,20190123-1-10X.jpg,1,Ambient,18,A,lumen,198:255,0.:255,68:255
 3,20190123,20190123-1-10X.jpg,1,Ambient,42.427,A,zoa,158:185,195:255,58:255

@@ -18,17 +18,43 @@ library(gridExtra)
 
 # set wd and Load data
 ```{r}
-setwd("C:/Users/samjg/Documents/My_Projects/Pgenerosa_histology/RAnalysis/Data") #set working
+setwd("C:/Users/samjg/Documents/Github_Repositories/Pgenerosa_histology/RAnalysis/Data") #set working
 staging<-read.csv("Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
 Male_hist<-read.csv("Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
 head(staging)
 head(Male_hist)
 ```
 
+# Quantiative criteria 
+
+```{r}
+
+Male_hist_settings <- Male_hist %>% 
+  dplyr::select(c('type', 'hue_range', 'saturation_range', 'brightness_range')) %>% 
+  na.omit() %>% 
+  dplyr::mutate(hue_start = as.numeric(sub("\\:.*", "", hue_range))) %>% 
+  dplyr::mutate(hue_end = as.numeric(sub(".*:", "", hue_range))) %>% 
+  dplyr::mutate(saturation_start = as.numeric(sub("\\:.*", "", saturation_range))) %>% 
+  dplyr::mutate(saturation_end = as.numeric(sub(".*:", "", saturation_range))) %>% 
+  dplyr::mutate(brightness_start = as.numeric(sub("\\:.*", "", brightness_range))) %>% 
+  dplyr::mutate(brightness_end = as.numeric(sub(".*:", "", brightness_range))) %>% 
+  dplyr::group_by(type)  %>%
+  dplyr::summarize(hue_startMEAN = mean(hue_start, na.rm=TRUE),
+                   hue_endMEAN   = mean(hue_end, na.rm=TRUE),
+                   saturation_startMEAN = mean(saturation_start, na.rm=TRUE),
+                   saturation_endMEAN   = mean(saturation_end, na.rm=TRUE),
+                   brightness_startMEAN = mean(brightness_start, na.rm=TRUE),
+                   brightness_endMEAN   = mean(brightness_end, na.rm=TRUE))
+
+Male_hist_settings
+
+```
+
+
 # PIVOT THE TABLE TO CALC PROPORTION VALUES RELATIVE TO TOTAL AREA
 
 ```{r}
-Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
+Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue_range','saturation_range','brightness_range')) %>% 
   tidyr::pivot_wider(names_from=type, values_from=Area)
 Male_hist_2$perc_zoa <- (Male_hist_2$zoa/Male_hist_2$total_area)*100 # percent area of spermatozoa
 Male_hist_2$perc_cytes <- ((Male_hist_2$cytes_zoa - Male_hist_2$zoa)/Male_hist_2$total_area)*100 # percent area of spermatocytes
@@ -37,7 +63,23 @@ Male_hist_2$cytes <- (Male_hist_2$cytes_zoa - Male_hist_2$zoa) # area of spermat
 head(Male_hist_2)
 ```
 
-#   TWO WAY ANOVAs (proprtion.hist.trait ~ treatment × date)
+
+# Average proprotions (persenct area) of each feature 
+```{r}
+Mean_Proportion_Table <- Male_hist_2 %>% 
+  dplyr::select(c('Date', 'Treatment', 'perc_zoa','perc_cytes', 'perc_lumen')) %>% 
+  na.omit() %>%
+  dplyr::group_by(Date, Treatment) %>% 
+  summarise_each(funs(mean,sd,se=sd(.)/sqrt(n())))
+# Date      Treat   zoaMEAN    zoaSTE   perc_cytes_se
+# 20190123	Ambient	8.995023   1.503110
+# 20190123	Low	    11.272194  1.171135
+# 20190221	Ambient	21.550115  2.871774
+# 20190221	Low	    18.410939  1.872914	
+```
+
+
+#   TWO WAY ANOVAs (proprtion.hist.trait ~ treatment ? date)
 ```{r}
 Male_hist_2$Date <- as.character(Male_hist_2$Date) # make Date a character variable!
 # PERC ZOA TEST

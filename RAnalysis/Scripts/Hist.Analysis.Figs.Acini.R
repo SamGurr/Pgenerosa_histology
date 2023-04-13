@@ -23,13 +23,12 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Pgenerosa_histology/RAnalysi
 ######################################################################### #
 
 # UPLOAD DATA------------------------------------------------------------------------------------------
-staging<-read.csv("Data/Staging/Hist_Staging_Kaitlyn.csv", header=T, sep=",", na.string="NA", as.is=T) 
-staging
+staging<-read.csv("Data/Staging/Hist_Staging_Trigg_Crandall.csv", header=T, sep=",", na.string="NA", as.is=T)  %>%  dplyr::filter(Sex %in% 'M')
 Male_hist<-read.csv("Data/Master_summary_male_acini.csv", header=T, sep=",", na.string="NA", as.is=T) 
 Male_hist # view data
 Male_hist$Area = as.numeric(Male_hist$Area)
 # PIVOT THE TABLE TO CALC RELATIVE VALUES--------------------------------------------------------------
-Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue','saturation','brightness')) %>% 
+Male_hist_2 <- Male_hist %>% dplyr::select(-c('Meas_num','Label','hue_range','saturation_range','brightness_range')) %>% 
   tidyr::pivot_wider(names_from=type, values_from=Area)
 Male_hist_2 <- Male_hist_2 %>% dplyr::select(-'total_area')
 # CALC RELATIVE VALUES---------------------------------------------------------------------------------
@@ -205,12 +204,14 @@ ggsave(file="Output/Grid_plot.pdf", ALL_PLOTS, width = 12, height = 8, units = c
 ######################################################################### #
 ###LINEAR REG WITH STAGE AS INDEP VAR  ############################### #
 ######################################################################### #
-Male_hist_2$Geoduck_ID <- Male_hist_2$ID
-staging_coltrim        <- staging %>% dplyr::select(c('Geoduck_ID','Geoduck_ID','Stage_ID','Staging_number'))
-MaleHistStage_merge    <- merge(Male_hist_2,staging_coltrim,by="Geoduck_ID") %>% 
-                                dplyr::mutate(ID = gsub('.*_00', '', Geoduck_ID)) %>% 
-                                dplyr::mutate(ID = gsub('.*_0', '', Geoduck_ID))
-View(staging)
+Male_hist_2            <- Male_hist_2 %>% 
+                          dplyr::rename(Geoduck.ID = ID) %>% 
+                          dplyr::mutate(Geoduck.ID = gsub('.*_00', '', Geoduck.ID)) %>% 
+                          dplyr::mutate(Geoduck.ID = gsub('.*_0', '', Geoduck.ID))
+staging_coltrim        <- staging %>% dplyr::select(c('Geoduck.ID','Stage_Trigg')) %>%  dplyr::rename(Staging_number = Stage_Trigg)
+MaleHistStage_merge    <- merge(Male_hist_2,staging_coltrim,by="Geoduck.ID")
+# View(MaleHistStage_merge) # view data
+
 MaleHistStage_221     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190221')
 MaleHistStage_123     <- MaleHistStage_merge %>% dplyr::filter(Date %in% '20190123')
 
@@ -221,7 +222,7 @@ PERClumen_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), per
                         geom_boxplot(alpha = 0.5, outlier.shape = NA) +
                         # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
                         #geom_jitter(position = position_jitter()) +
-                        geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                        geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
                          scale_color_manual(values = c("#00BFC4","#F8766D")) +
                         # scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
                         theme_classic() +
@@ -237,7 +238,7 @@ PERCzoa_staging <- ggplot(MaleHistStage_merge, aes(as.factor(Staging_number), pe
                     geom_boxplot(alpha = 0.5, outlier.shape = NA) +
                     # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
                     #geom_jitter(position = position_jitter()) +
-                    geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                    geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
                      scale_color_manual(values = c("#00BFC4","#F8766D")) +
                     #scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
                     theme_classic() +
@@ -254,7 +255,7 @@ PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), per
                       geom_boxplot(alpha = 0.5, outlier.shape = NA) +
                       # geom_point(size = 3, position = position_jitterdodge(jitter.width = 0.1)) +
                       #geom_jitter(position = position_jitter()) +
-                      geom_text(aes(label=ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                      geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
                        scale_color_manual(values = c("#00BFC4","#F8766D")) +
                       #scale_color_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
                       theme_classic() +
@@ -265,12 +266,294 @@ PERCcytes_staging <- ggplot(MaleHistStage_merge, aes(factor(Staging_number), per
 PERCcytes_staging2 <-PERCcytes_staging + theme(text = element_text(size = 15))  # view plot
 PERCcytes_staging2
 
-
 # grid plots
 staging_hist_plots <- grid.arrange(PERCcytes_staging2, PERCzoa_staging2, PERClumen_staging2, ncol =3, nrow = 1)
 staging_hist_plots # view plot
 #  SAVE
-ggsave(file="Output/StagingHist_regression_plot.pdf", staging_hist_plots, width = 14, height = 7, units = c("in")) 
+ggsave(file="Output/StagingHist_regression_plot.pdf", staging_hist_plots, width = 16, height = 8, units = c("in")) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################################################ #
+###LINEAR REG WITH STAGE AS INDEP VAR (MEANS BY GEODUCK ID)  ############################### #
+############################################################################################ #
+
+MaleHistStage_merge_MEAN    <- MaleHistStage_merge %>% 
+                                    dplyr::group_by(Geoduck.ID, Date, Treatment, Staging_number) %>% 
+                                    dplyr::summarise(
+                                      mean.perc_lumen = mean(perc_lumen),
+                                      mean.perc_cytes = mean(perc_cytes),
+                                      mean.perc_zoa   = mean(perc_zoa),
+                                    )
+# plit datasets by time point to call the lm r squared value in each plot 
+MaleHistStage_MEAN_72d    <- MaleHistStage_merge_MEAN %>% filter(Date %in% '20190123') # 72 days of exposure 
+MaleHistStage_MEAN_8dpost <- MaleHistStage_merge_MEAN %>% filter(Date %in% '20190221') # 8 days post exposure 
+
+# PERCENT LUMEN (MEANS) ######################################################3 #
+# main plot
+PERClumen_staging.MEAN <- ggplot(MaleHistStage_merge_MEAN, aes(factor(Staging_number), mean.perc_lumen)) +
+                              geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+                              geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+                              scale_color_manual(values = c("#00BFC4","#F8766D")) +
+                              theme_classic() +
+                              labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
+                              geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+                              theme(legend.position = "none") +
+                              facet_wrap(~Date)
+
+# call text to insert r sqiuared values to each facet
+PERClumen_text <- data.frame(
+                    label = c(paste('r^2 = ', 
+                                    signif(summary(lm(mean.perc_lumen ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = ''), 
+                              paste('r^2 = ', 
+                                    signif(summary(lm(mean.perc_lumen ~ Staging_number, data = MaleHistStage_MEAN_8dpost))$r.squared, 2), sep = '')),
+                    Date   = c('20190123', '20190221') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERClumen_staging.MEAN2 <- PERClumen_staging.MEAN + 
+                            theme(text = element_text(size = 15)) + # view plot
+                            geom_text(
+                              data = PERClumen_text,
+                              mapping = aes(x=4, y=25, label=label)
+                            )
+PERClumen_staging.MEAN2 # ambient is blue and elevated pCO2 is orange
+
+# PERCENT zoa (MEANS) ######################################################3 #
+# main plot
+PERCzoa_staging.MEAN <- ggplot(MaleHistStage_merge_MEAN, aes(factor(Staging_number), mean.perc_zoa)) +
+  geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+  geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+  scale_color_manual(values = c("#00BFC4","#F8766D")) +
+  theme_classic() +
+  labs(y=expression("zoa (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+  theme(legend.position = "none") +
+  facet_wrap(~Date)
+
+# call text to insert r sqiuared values to each facet
+PERCzoa_text <- data.frame(
+  label = c(paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_zoa ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = ''), 
+            paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_zoa ~ Staging_number, data = MaleHistStage_MEAN_8dpost))$r.squared, 2), sep = '')),
+  Date   = c('20190123', '20190221') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERCzoa_staging.MEAN2 <- PERCzoa_staging.MEAN + 
+  theme(text = element_text(size = 15)) + # view plot
+  geom_text(
+    data = PERCzoa_text,
+    mapping = aes(x=4, y=45, label=label)
+  )
+PERCzoa_staging.MEAN2 # ambient is blue and elevated pCO2 is orange
+
+
+# PERCENT cytes (MEANS) ######################################################3 #
+# main plot
+PERCcytes_staging.MEAN <- ggplot(MaleHistStage_merge_MEAN, aes(factor(Staging_number), mean.perc_cytes)) +
+  geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+  geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+  scale_color_manual(values = c("#00BFC4","#F8766D")) +
+  theme_classic() +
+  labs(y=expression("cytes (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+  theme(legend.position = "none") +
+  facet_wrap(~Date)
+
+# call text to insert r sqiuared values to each facet
+PERCcytes_text <- data.frame(
+  label = c(paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_cytes ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = ''), 
+            paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_cytes ~ Staging_number, data = MaleHistStage_MEAN_8dpost))$r.squared, 2), sep = '')),
+  Date   = c('20190123', '20190221') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERCcytes_staging.MEAN2 <- PERCcytes_staging.MEAN + 
+  theme(text = element_text(size = 15)) + # view plot
+  geom_text(
+    data = PERCcytes_text,
+    mapping = aes(x=4, y=100, label=label)
+  )
+PERCcytes_staging.MEAN2 # ambient is blue and elevated pCO2 is orange
+
+
+
+# grid plots
+staging_hist_plots.MEANS <- grid.arrange(PERClumen_staging.MEAN2, PERCzoa_staging.MEAN2, PERCcytes_staging.MEAN2, ncol =3, nrow = 1)
+staging_hist_plots.MEANS # view plot
+#  SAVE
+ggsave(file="Output/StagingHist_regression_plot_means.pdf", staging_hist_plots.MEANS, width = 16, height = 8, units = c("in")) 
+
+
+
+
+
+
+
+
+
+# added on 4/1/2023 to eempjasize the significant linear regressions that ONLY 
+# occured on day 72 (not 8d post) likely because of reabsportion or spent gonad 
+# that reduced the linkage between qual and quant to ascertain reproductive status
+############################################################################################ #
+###LINEAR REG WITH STAGE AS INDEP VAR (MEANS BY GEODUCK ID Day72 ONLY)  #################### #
+############################################################################################ #
+
+MaleHistStage_merge_MEAN    <- MaleHistStage_merge %>% 
+  dplyr::group_by(Geoduck.ID, Date, Treatment, Staging_number) %>% 
+  dplyr::summarise(
+    mean.perc_lumen = mean(perc_lumen),
+    mean.perc_cytes = mean(perc_cytes),
+    mean.perc_zoa   = mean(perc_zoa),
+  )
+# plit datasets by time point to call the lm r squared value in each plot 
+MaleHistStage_MEAN_72d    <- MaleHistStage_merge_MEAN %>% filter(Date %in% '20190123') # 72 days of exposure 
+MaleHistStage_MEAN_8dpost <- MaleHistStage_merge_MEAN %>% filter(Date %in% '20190221') # 8 days post exposure 
+
+# PERCENT LUMEN (MEANS) ######################################################3 #
+# main plot
+PERClumen_staging.MEAN_D72 <- ggplot(MaleHistStage_MEAN_72d, aes(factor(Staging_number), mean.perc_lumen)) +
+  geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+  geom_text(aes(label=Geoduck.ID, color = Treatment), position = position_jitter(height = .25, width = .25), size = 4) +
+  scale_color_manual(values = c("#00BFC4","#F8766D")) +
+  theme_classic() +
+  labs(y=expression("Lumen (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+  theme(legend.position = "none") +
+  xlab("Stage") 
+  
+
+# call text to insert r sqiuared values to each facet
+PERClumen_text_D72 <- data.frame(
+  label = (paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_lumen ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = '')), 
+  Date   = ('20190123') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERClumen_staging.MEAN_D72 <- PERClumen_staging.MEAN_D72 + 
+  theme(text = element_text(size = 15)) + # view plot
+  geom_text(
+    data = PERClumen_text_D72,
+    mapping = aes(x=4, y=25, label=label)
+  )
+PERClumen_staging.MEAN_D72 # ambient is blue and elevated pCO2 is orange
+
+# PERCENT zoa (MEANS) ######################################################3 #
+# main plot
+PERCzoa_staging.MEAN_D72 <- ggplot(MaleHistStage_MEAN_72d, aes(factor(Staging_number), mean.perc_zoa)) +
+  geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+  scale_color_manual(values = c("#00BFC4","#F8766D")) +
+  theme_classic() +
+  labs(y=expression("zoa (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+  theme(legend.position = "none") +
+  xlab("Stage") 
+
+# call text to insert r sqiuared values to each facet
+PERCzoa_text_D72 <- data.frame(
+  label = c(paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_zoa ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = '')), 
+
+  Date   = ('20190123') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERCzoa_staging.MEAN_D72 <- PERCzoa_staging.MEAN_D72 + 
+  theme(text = element_text(size = 15)) + # view plot
+  geom_text(
+    data = PERCzoa_text_D72,
+    mapping = aes(x=4, y=45, label=label)
+  )
+PERCzoa_staging.MEAN_D72 # ambient is blue and elevated pCO2 is orange
+
+
+# PERCENT cytes (MEANS) ######################################################3 #
+# main plot
+PERCcytes_staging.MEAN_72d <- ggplot(MaleHistStage_MEAN_72d, aes(factor(Staging_number), mean.perc_cytes)) +
+  geom_point(aes(color=Treatment, shape = Treatment), size = 3) +
+  scale_color_manual(values = c("#00BFC4","#F8766D")) +
+  theme_classic() +
+  labs(y=expression("cytes (% area total acini)"), x=expression("Staging ID")) +
+  geom_smooth(method = "lm", se=T, color="grey25", alpha = 0.2, aes(group=1)) +
+  theme(legend.position = "none") +
+  xlab("Stage") 
+
+# call text to insert r sqiuared values to each facet
+PERCcytes_text_D72 <- data.frame(
+  label = c(paste('r^2 = ', 
+                  signif(summary(lm(mean.perc_cytes ~ Staging_number, data = MaleHistStage_MEAN_72d))$r.squared, 2), sep = '')), 
+
+  Date   = ('20190123') # the facet levels, order pertains to the the labels called above
+)
+
+# insert r squared values to the facetted figure 
+PERCcytes_staging.MEAN2_72d  <- PERCcytes_staging.MEAN_72d + 
+  theme(text = element_text(size = 15)) + # view plot
+  geom_text(
+    data = PERCcytes_text_D72,
+    mapping = aes(x=4, y=100, label=label)
+  )
+PERCcytes_staging.MEAN2_72d # ambient is blue and elevated pCO2 is orange
+
+
+
+# grid plots
+staging_hist_plots.MEANS_D72 <- grid.arrange(PERClumen_staging.MEAN_D72,
+                                             PERCzoa_staging.MEAN_D72,
+                                             PERCcytes_staging.MEAN2_72d, ncol =3, nrow = 1)
+staging_hist_plots.MEANS_D72 # view plot
+#  SAVE
+ggsave(file="Output/StagingHist_regression_plot_means_d72.pdf", staging_hist_plots.MEANS_D72, width = 16, height = 5, units = c("in")) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -533,7 +816,7 @@ Means_Table$Date <- as.character(Means_Table$Date)
 plot_area <- ggplot(Means_Table, aes(x=Date, y=mean_AREA, color=Treatment, fill - white)) +
               theme_bw() +
               geom_boxplot() +
-              ylab("acini area (µm)") +
+              ylab("acini area (?m)") +
               scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
               annotate("text", size = 12, x=0.55, y=1300, label= "A")
 pA <- plot_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
@@ -572,7 +855,7 @@ MeansTable_2 <- Means_Table[-c(11), ]
 plot_zoa_area <- ggplot(MeansTable_2, aes(x=Date, y=mean_zoa, color=Treatment, fill - white)) +
   theme_bw() +
   geom_boxplot() +
-  ylab("mean area spermatozoa (µm^3)") +
+  ylab("mean area spermatozoa (?m^3)") +
   scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
   annotate("text", size = 12, x=0.55, y=320, label= "B")
 pB2 <- plot_zoa_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
@@ -580,7 +863,7 @@ pB2 <- plot_zoa_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legen
 plot_cytes_area <- ggplot(MeansTable_2, aes(x=Date, y=mean_cytes, color=Treatment, fill - white)) +
   theme_bw() +
   geom_boxplot() +
-  ylab("mean area spermatocytes (µm^3)") +
+  ylab("mean area spermatocytes (?m^3)") +
   scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
   annotate("text", size = 12, x=0.55, y=975, label= "C")
 pC2 <- plot_cytes_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
@@ -588,7 +871,7 @@ pC2 <- plot_cytes_area %>% ggadd("jitter", size = 3, fill = "white") + theme(leg
 plot_lumen_area <- ggplot(MeansTable_2, aes(x=Date, y=mean_lumen, color=Treatment, fill - white)) +
   theme_bw() +
   geom_boxplot() +
-  ylab("mean area lumen (µm^3)") +
+  ylab("mean area lumen (?m^3)") +
   scale_x_discrete(name ="exposure time (days)", labels=c("72","93 + 8 day recovery")) +
   annotate("text", size = 12, x=0.55, y=200, label= "D")
 pD2 <- plot_lumen_area %>% ggadd("jitter", size = 3, fill = "white") + theme(legend.position="none")
@@ -611,7 +894,7 @@ Means_Table$Date <- as.factor(Means_Table$Date)
 par(mfrow=c(2,2)) #set plotting configuration
 par(mar=c(1,1,1,1)) #set margins for plots
 
-# Two-Way ANOVA (treat×time)
+# Two-Way ANOVA (treat?time)
 typeof(Means_Table$Date) # currenty an integer - must change to a character
 Means_Table$Date <- as.character(Means_Table$Date)
 
